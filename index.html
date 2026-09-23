@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Monitoring Kerawanan Satwa & Proteksi SUTT/SUTET - UPT Palembang</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col bg-slate-100">
+
+  <!-- 1. HEADER SECTION -->
+  <div id="headerSection"></div>
+
+  <!-- 2. MAIN CONTAINER -->
+  <main class="max-w-[1600px] mx-auto w-full px-6 py-5 flex-1 space-y-5">
+    <!-- Filter Bar (Search, ULTG & SUTT Cascading) - Muncul di seluruh tab -->
+    <div id="filterSection"></div>
+
+    <!-- TAB 1: RINGKASAN & ANALITIK (Screenshot 1) -->
+    <div id="viewAnalitik" class="space-y-5 hidden"></div>
+
+    <!-- TOP KPI SUMMARY CARDS (Screenshot 2 & 3) -->
+    <div id="kpiSection" class="hidden"></div>
+
+    <!-- TAB 3: KLASIFIKASI SATWA & PILL BUTTONS (Screenshot 2 Kerawanan Satwa) -->
+    <div id="classificationSection" class="hidden"></div>
+    <div id="categoryButtonsSection" class="hidden"></div>
+
+    <!-- DATA TABLE & PAGINATION (Screenshot 2 Manajemen Asset & Kerawanan Satwa) -->
+    <div id="tableSection" class="hidden"></div>
+
+    <!-- TAB 4: RENCANA TINDAK LANJUT (Screenshot 3) -->
+    <div id="viewTindakLanjut" class="space-y-5 hidden"></div>
+  </main>
+
+  <!-- 3. MODAL SECTION -->
+  <div id="modalSection"></div>
+
+  <!-- MODULAR UI COMPONENTS -->
+  <script src="js/components/headerComponent.js?v=20260923_v2"></script>
+  <script src="js/components/filterComponent.js?v=20260923_v2"></script>
+  <script src="js/components/kpiComponent.js?v=20260923_v2"></script>
+  <script src="js/components/classificationComponent.js?v=20260923_v2"></script>
+  <script src="js/components/categoryButtonsComponent.js?v=20260923_v2"></script>
+  <script src="js/components/tableComponent.js?v=20260923_v2"></script>
+  <script src="js/components/modalComponent.js?v=20260923_v2"></script>
+  <script src="js/components/tabAnalitikComponent.js?v=20260923_v2"></script>
+  <script src="js/components/tabTindakLanjutComponent.js?v=20260923_v2"></script>
+
+  <!-- BUSINESS LOGIC & DATA MODULES -->
+  <script src="js/config.js?v=20260923_v2"></script>
+  <script src="js/defaultData.js?v=20260923_v2"></script>
+  <script src="js/data.js?v=20260923_v2"></script>
+  <script src="js/metrics.js?v=20260923_v2"></script>
+  <script src="js/filters.js?v=20260923_v2"></script>
+  <script src="js/table.js?v=20260923_v2"></script>
+  <script src="js/modal.js?v=20260923_v2"></script>
+
+  <!-- MAIN APPLICATION ENTRY POINT -->
+  <script src="js/app.js?v=20260923"></script>
+
+</body>
+</html>

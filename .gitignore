@@ -1,0 +1,11 @@
+# Node modules (jika ada instalasi lokal)
+node_modules/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
