@@ -37,15 +37,19 @@ function renderTable() {
   }
 
   pageSlice.forEach((item, index) => {
-    let badgeColor = "bg-slate-100 text-slate-600 border-slate-200";
-    if (item.kategori === "BURUNG") badgeColor = "bg-sky-50 text-sky-700 border-sky-300";
-    else if (item.kategori === "KERA") badgeColor = "bg-amber-50 text-amber-700 border-amber-300";
-    else if (item.kategori === "KERA, BURUNG" || item.kategori === "ULAR, BURUNG" || item.kategori === "KERA, ULAR") badgeColor = "bg-purple-50 text-purple-700 border-purple-300";
-    else if (item.kategori === "ULAR") badgeColor = "bg-pink-50 text-pink-700 border-pink-300";
-
-    const kategoriOptionsHtml = (typeof KATEGORI_OPTIONS !== "undefined" ? KATEGORI_OPTIONS : [
-      "(Blanks) / Tidak Ada", "BURUNG", "KERA", "ULAR", "KERA, BURUNG"
-    ]).map(opt => `<option value="${opt}" ${item.kategori === opt ? "selected" : ""}>${opt}</option>`).join("");
+    // Badge Tampilan Nama Hewan (Statis tanpa dropdown)
+    let hewanBadge = `<span class="text-slate-400 font-normal">-</span>`;
+    if (item.kategori && item.kategori !== "(Blanks) / Tidak Ada" && item.kategori !== "-") {
+      if (item.kategori === "BURUNG") {
+        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>BURUNG</span>`;
+      } else if (item.kategori === "KERA") {
+        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>KERA</span>`;
+      } else if (item.kategori === "ULAR") {
+        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>ULAR</span>`;
+      } else {
+        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>${item.kategori}</span>`;
+      }
+    }
 
     const protBadge = item.proteksi === "TERPASANG" 
       ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Terpasang</span>`
@@ -54,10 +58,6 @@ function renderTable() {
     const actText = item.aktivitas && item.aktivitas !== "Tidak Ada Aktivitas"
       ? `<span class="text-indigo-600 font-semibold">${item.aktivitas}</span>`
       : `<span class="text-slate-400">Tidak ada</span>`;
-
-    const rekText = item.rekomendasi && item.rekomendasi !== "-"
-      ? `<span class="text-slate-700 font-medium">${item.rekomendasi}</span>`
-      : `<span class="text-slate-400">-</span>`;
 
     const row = document.createElement("tr");
     row.className = "hover:bg-slate-50/80 transition-colors";
@@ -70,11 +70,7 @@ function renderTable() {
       <td class="py-3 px-3.5">
         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">${item.ultg}</span>
       </td>
-      <td class="py-3 px-3.5">
-        <select onchange="inlineUpdateKategori(${item.no}, this.value)" title="Ubah Nama Hewan (Kolom AL & AM)" class="text-xs font-semibold px-2 py-1 rounded-md border ${badgeColor} cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white">
-          ${kategoriOptionsHtml}
-        </select>
-      </td>
+      <td class="py-3 px-3.5">${hewanBadge}</td>
       <td class="py-3 px-3.5">
         ${item.perangkat && item.perangkat !== "-" && item.perangkat !== "TIDAK TERPASANG"
           ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${item.perangkat}</span>`
