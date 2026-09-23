@@ -71,18 +71,29 @@ function renderTable() {
         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">${item.ultg}</span>
       </td>
       <td class="py-3 px-3.5">
-        <select onchange="inlineUpdateKategori(${item.no}, this.value)" class="text-xs font-semibold px-2 py-1 rounded-md border ${badgeColor} cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white">
+        <select onchange="inlineUpdateKategori(${item.no}, this.value)" title="Ubah Nama Hewan (Kolom AL & AM)" class="text-xs font-semibold px-2 py-1 rounded-md border ${badgeColor} cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white">
           ${kategoriOptionsHtml}
         </select>
       </td>
       <td class="py-3 px-3.5">
-        <button type="button" onclick="inlineToggleProteksi(${item.no})" title="Klik untuk ubah status proteksi" class="hover:opacity-80 transition cursor-pointer">
-          ${protBadge}
-        </button>
+        ${item.perangkat && item.perangkat !== "-" && item.perangkat !== "TIDAK TERPASANG"
+          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${item.perangkat}</span>`
+          : `<span class="text-slate-400 font-normal">-</span>`
+        }
       </td>
-      <td class="py-3 px-3.5 text-slate-600 font-medium">${item.perangkat || "-"}</td>
       <td class="py-3 px-3.5 text-[11px]">${actText}</td>
-      <td class="py-3 px-3.5 text-[11px]">${rekText}</td>
+      <td class="py-3 px-3.5 text-[11px]">
+        ${item.tapak && item.tapak.includes("Perlu")
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Perlu Bersih Tapak</span>`
+          : `<span class="text-slate-400">Tidak Diperlukan</span>`
+        }
+      </td>
+      <td class="py-3 px-3.5 text-[11px]">
+        ${item.rekomendasi && item.rekomendasi !== "-"
+          ? `<span class="text-slate-700 font-medium">${item.rekomendasi}</span>`
+          : `<span class="text-slate-400">-</span>`
+        }
+      </td>
       <td class="py-3 px-3.5 text-center">
         <div class="flex items-center justify-center gap-1">
           <button onclick="openEditModal(${item.no})" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition" title="Lihat Detail"><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>

@@ -11,12 +11,12 @@ function renderClassificationComponent() {
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2.5">
           <i data-lucide="shield-alert" class="w-5 h-5 text-sky-600"></i>
-          <h2 class="text-sm font-bold text-slate-800">Klasifikasi Kategori Satwa Liar (Kolom AP: RAWAN BINATANG)</h2>
-          <span class="px-2 py-0.5 text-[10px] font-bold tracking-wider rounded bg-sky-50 text-sky-600 border border-sky-200">KOLOM AP</span>
+          <h2 class="text-sm font-bold text-slate-800">Klasifikasi Kategori Satwa Liar (RAWAN BINATANG)</h2>
+          <span class="px-2 py-0.5 text-[10px] font-bold tracking-wider rounded bg-sky-50 text-sky-600 border border-sky-200">DATA SATWA</span>
         </div>
       </div>
       <p class="text-xs text-slate-500">
-        Data dikelompokkan sesuai nilai asli kolom AP: <span class="font-medium text-slate-700">BURUNG, KERA, KERA, BURUNG, ULAR</span>, dan <span class="font-medium text-slate-700">(Blanks) / Tidak Ada</span> untuk sel kosong. Klik kartu untuk filter instan.
+        Data dikelompokkan sesuai jenis satwa: <span class="font-medium text-slate-700">BURUNG, KERA, KERA, BURUNG, ULAR</span>, dan <span class="font-medium text-slate-700">(Blanks) / Tidak Ada</span> untuk sel kosong. Klik kartu untuk filter instan.
       </p>
 
       <!-- 5 CATEGORY METRIC BOXES (CLICKABLE) -->

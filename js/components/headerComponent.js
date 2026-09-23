@@ -54,7 +54,7 @@ function renderHeaderComponent() {
           </button>
           <button id="navTabSatwa" onclick="switchTab('satwa')" class="py-3 px-1 text-sky-400 font-semibold flex items-center gap-2 border-b-2 border-sky-400 transition">
             <i data-lucide="shield-alert" class="w-4 h-4 text-sky-400"></i>
-            Kerawanan Satwa (Kolom AP)
+            Kerawanan Satwa
           </button>
           <button id="navTabTindakLanjut" onclick="switchTab('tindak-lanjut')" class="py-3 px-1 text-slate-400 hover:text-slate-200 flex items-center gap-2 font-medium border-b-2 border-transparent transition">
             <i data-lucide="wrench" class="w-4 h-4"></i>

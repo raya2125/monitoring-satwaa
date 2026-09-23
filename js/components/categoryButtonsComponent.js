@@ -9,7 +9,7 @@ function renderCategoryButtonsComponent() {
   container.innerHTML = `
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-semibold text-slate-600 mr-1">Filter Cepat Kolom AP:</span>
+        <span class="text-xs font-semibold text-slate-600 mr-1">Filter Cepat Satwa:</span>
         <button onclick="setCategoryFilter('')" id="btnFilterAll" class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-600 text-white shadow-sm transition">
           Semua Menara <span id="btnCountAll" class="ml-1 opacity-80">3.201</span>
         </button>

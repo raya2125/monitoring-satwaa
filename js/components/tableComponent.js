@@ -44,18 +44,12 @@ function renderTableStructureComponent() {
             <tr class="bg-slate-50/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-semibold">
               <th class="py-3 px-3.5 w-12 text-center">NO</th>
               <th class="py-3 px-3.5 min-w-[220px]">TOWER & JALUR SUTT</th>
-              <th class="py-3 px-3.5 min-w-[130px]">ULTG</th>
-              <th class="py-3 px-3.5 min-w-[170px]">
-                <div class="flex items-center gap-1.5">
-                  <span>RAWAN BINATANG</span>
-                  <span class="text-[9px] px-1 py-0.5 rounded bg-sky-100 text-sky-700 font-bold">KOLOM AP</span>
-                </div>
-                <div class="text-[9px] text-slate-400 font-normal">KOLOM AL & AM</div>
-              </th>
-              <th class="py-3 px-3.5 min-w-[130px]">STATUS PROTEKSI</th>
-              <th class="py-3 px-3.5 min-w-[140px]">PERANGKAT TERPASANG</th>
+              <th class="py-3 px-3.5 min-w-[120px]">ULTG</th>
+              <th class="py-3 px-3.5 min-w-[160px]">NAMA HEWAN</th>
+              <th class="py-3 px-3.5 min-w-[160px]">PERANGKAT TERPASANG</th>
               <th class="py-3 px-3.5 min-w-[130px]">AKTIVITAS SATWA</th>
               <th class="py-3 px-3.5 min-w-[160px]">RENCANA TINDAK LANJUT</th>
+              <th class="py-3 px-3.5 min-w-[170px]">REKOMENDASI</th>
               <th class="py-3 px-3.5 text-center w-28">AKSI</th>
             </tr>
           </thead>

@@ -62,7 +62,7 @@ function renderFilterComponent() {
 
       <div class="w-64">
         <select id="filterKategori" onchange="applyFilters()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 text-slate-700">
-          <option value="">RAWAN SATWA (Kolom AP): Semua</option>
+          <option value="">RAWAN SATWA / HEWAN: Semua Kategori</option>
           <option value="BURUNG">BURUNG</option>
           <option value="KERA">KERA</option>
           <option value="ULAR">ULAR</option>
