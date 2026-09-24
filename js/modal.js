@@ -19,7 +19,13 @@ function openEditModal(no) {
   if (document.getElementById("editBinatang1")) document.getElementById("editBinatang1").value = b1;
   if (document.getElementById("editBinatang2")) document.getElementById("editBinatang2").value = b2;
 
-  document.getElementById("editAktivitas").value = item.aktivitas || "Tidak Ada Aktivitas";
+  let aktVal = item.aktivitas || "Sesuai";
+  if (aktVal === "Tidak Ada Aktivitas" || aktVal === "Terlihat Aktivitas Ringan" || aktVal === "Sesuai") {
+    aktVal = "Sesuai";
+  } else {
+    aktVal = "Tidak Sesuai";
+  }
+  document.getElementById("editAktivitas").value = aktVal;
   document.getElementById("editCatatan").value = item.catatan !== "-" ? (item.catatan || "") : "";
   document.getElementById("editTapak").value = item.tapak || "Tidak Diperlukan";
   document.getElementById("editRekomendasi").value = item.rekomendasi !== "-" ? (item.rekomendasi || "") : "";
@@ -170,11 +176,13 @@ async function submitTowerUpdate(event) {
       item.catatan = catatan;
       item.tapak = tapak;
       item.rekomendasi = rekomendasi;
+      item.rencanaTindakLanjut = rekomendasi;
     }
 
     const badge = document.getElementById("syncBadge");
     if (badge) {
       badge.classList.remove("hidden");
+
       badge.classList.add("flex");
       setTimeout(() => badge.classList.add("hidden"), 4000);
     }
@@ -198,7 +206,7 @@ function openAddNewModal() {
   const currentUltg = (document.getElementById("filterUltg") && document.getElementById("filterUltg").value) || "ULTG BETUNG";
   const availableJalurs = getJalursForUltg(currentUltg);
   const defaultJalur = availableJalurs[0] || "TRS 150kV TLKLP - BTUNG";
-  
+
   const newTower = {
     no: towerData.length + 1,
     nama: newName,
@@ -207,7 +215,7 @@ function openAddNewModal() {
     kategori: "(Blanks) / Tidak Ada",
     proteksi: "BELUM TERPASANG",
     perangkat: "-",
-    aktivitas: "Tidak Ada Aktivitas",
+    aktivitas: "Sesuai",
     catatan: "-",
     tapak: "Tidak Diperlukan",
     rekomendasi: "Pembersihan Rutin"

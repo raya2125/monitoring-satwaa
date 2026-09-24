@@ -10,6 +10,7 @@ let isSyncing = false;
 
 // Inisialisasi awal dataset dari dataset realSpreadsheetTowers atau cache lokal v2
 function initDataset() {
+  let loaded = false;
   try {
     // Bersihkan cache lama jika ada
     localStorage.removeItem("trs_plm_tower_data");
@@ -19,22 +20,36 @@ function initDataset() {
       const parsedCache = JSON.parse(cached);
       if (Array.isArray(parsedCache) && parsedCache.length > 0) {
         towerData = parsedCache;
-        filteredData = [...towerData];
         console.log(`[Data] Berhasil memuat ${towerData.length} data menara dari cache lokal.`);
-        return;
+        loaded = true;
       }
     }
   } catch (err) {
     console.warn("[Data] Gagal membaca cache:", err);
   }
 
-  // Gunakan data riil dari Google Spreadsheet yang sudah di-bundle
-  if (typeof realSpreadsheetTowers !== "undefined" && Array.isArray(realSpreadsheetTowers) && realSpreadsheetTowers.length > 0) {
-    towerData = [...realSpreadsheetTowers];
-    console.log(`[Data] Memuat ${towerData.length} data menara dari realSpreadsheetTowers.`);
-  } else {
-    towerData = [];
+  if (!loaded) {
+    // Gunakan data riil dari Google Spreadsheet yang sudah di-bundle
+    if (typeof realSpreadsheetTowers !== "undefined" && Array.isArray(realSpreadsheetTowers) && realSpreadsheetTowers.length > 0) {
+      towerData = [...realSpreadsheetTowers];
+      console.log(`[Data] Memuat ${towerData.length} data menara dari realSpreadsheetTowers.`);
+    } else {
+      towerData = [];
+    }
   }
+
+  // Normalisasi aktivitas menjadi Sesuai atau Tidak Sesuai
+  towerData.forEach(t => {
+    if (t.aktivitas === "Sesuai" || t.aktivitas === "Tidak Sesuai") return;
+    if (t.aktivitas && (t.aktivitas.toLowerCase().includes("tidak") || t.aktivitas.toLowerCase().includes("ga") || t.aktivitas === "Sering Terlihat Satwa" || t.aktivitas === "Riwayat Gangguan/Trip")) {
+      t.aktivitas = (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" && t.proteksi === "BELUM TERPASANG") ? "Tidak Sesuai" : "Sesuai";
+    } else if (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" && t.proteksi === "BELUM TERPASANG") {
+      t.aktivitas = "Tidak Sesuai";
+    } else {
+      t.aktivitas = "Sesuai";
+    }
+    t.rencanaTindakLanjut = t.rekomendasi || "-";
+  });
 
   filteredData = [...towerData];
 }
@@ -124,14 +139,8 @@ function parseSpreadsheetCSVToTowers(csvText) {
       perangkat = antiBinatang;
     }
 
-    // Rekomendasi (Kolom 42)
-    const rek = (r[42] || "").trim();
-    const rekomendasi =
-      rek && rek !== "-"
-        ? rek
-        : proteksi === "TERPASANG"
-        ? "Monitoring Rutin Proteksi"
-        : "Pembersihan Tapak Tower";
+    // Rencana Tindak Lanjut (Kolom 42: Kolom AQ)
+    const rekomendasi = (r[42] || "-").trim() || "-";
 
     // Tapak (Kolom 43: PEMBERSIHAN TAPAK TOWER)
     const tapakRaw = (r[43] || "").trim();
@@ -145,13 +154,10 @@ function parseSpreadsheetCSVToTowers(csvText) {
     // Catatan (Kolom 54: KET KERAWANAN BINATANG NS atau Kolom 40)
     const catatan = (r[54] || r[40] || "-").trim() || "-";
 
-    // Aktivitas
-    let aktivitas = "Tidak Ada Aktivitas";
-    if (kategori !== "(Blanks) / Tidak Ada") {
-      aktivitas =
-        proteksi === "TERPASANG"
-          ? "Terlihat Aktivitas Ringan"
-          : "Sering Terlihat Satwa";
+    // Aktivitas Satwa (Sesuai / Tidak Sesuai)
+    let aktivitas = "Sesuai";
+    if (kategori !== "(Blanks) / Tidak Ada" && proteksi === "BELUM TERPASANG") {
+      aktivitas = "Tidak Sesuai";
     }
 
     towers.push({

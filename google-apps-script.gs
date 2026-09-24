@@ -73,6 +73,7 @@ function doGet(e) {
         kategori: kategori,
         proteksi: proteksi,
         perangkat: perangkat,
+        aktivitas: (kategori !== "(Blanks) / Tidak Ada" && proteksi === "BELUM TERPASANG") ? "Tidak Sesuai" : "Sesuai",
         rekomendasi: String(r[42] || "-").trim(),
         tapak: String(r[43] || "FALSE").toUpperCase().includes("TRUE") ? "Perlu Pembersihan Tapak" : "Tidak Diperlukan",
         catatan: String(r[54] || r[40] || "-").trim()

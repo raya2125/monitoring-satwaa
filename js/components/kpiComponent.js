@@ -55,11 +55,11 @@ function renderKpiComponent() {
       <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-500 text-xs">
           <span>Aktivitas Satwa</span>
-          <i data-lucide="pulse" class="w-4 h-4 text-indigo-500"></i>
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
         </div>
         <div class="mt-2">
-          <div class="text-2xl font-black text-slate-800" id="kpiAktivitas">291</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">Laporan Keberadaan</div>
+          <div class="text-2xl font-black text-slate-800" id="kpiAktivitas">0</div>
+          <div class="text-[11px] text-emerald-600 font-semibold mt-0.5"><span id="kpiAktivitasSesuai">0</span> Sesuai (<span id="kpiAktivitasTidak" class="text-rose-600 font-bold">0</span> Ga Sesuai)</div>
         </div>
       </div>
 

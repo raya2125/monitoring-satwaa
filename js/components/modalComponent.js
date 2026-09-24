@@ -133,12 +133,10 @@ function renderModalComponent() {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-slate-700 font-semibold mb-1">Aktivitas Satwa Liar</label>
-              <select id="editAktivitas" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 bg-white">
-                <option value="Tidak Ada Aktivitas">Tidak Ada Aktivitas</option>
-                <option value="Terlihat Aktivitas Ringan">Terlihat Aktivitas Ringan</option>
-                <option value="Sering Terlihat Satwa">Sering Terlihat Satwa</option>
-                <option value="Riwayat Gangguan/Trip">Riwayat Gangguan/Trip</option>
+              <label class="block text-slate-700 font-semibold mb-1">Aktivitas Satwa</label>
+              <select id="editAktivitas" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 bg-white font-medium">
+                <option value="Sesuai">Sesuai</option>
+                <option value="Tidak Sesuai">Tidak Sesuai</option>
               </select>
             </div>
             <div>
@@ -149,16 +147,16 @@ function renderModalComponent() {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-slate-700 font-semibold mb-1">Pembersihan Tapak Tower</label>
+              <label class="block text-slate-700 font-semibold mb-1">Rencana Tindak Lanjut <span class="text-sky-600 font-bold">(Kolom AQ)</span></label>
+              <input type="text" id="editRekomendasi" placeholder="mis. Pasang Boluves / Jaring / Monitoring" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1">Pembersihan Tapak Tower <span class="text-slate-500 font-normal">(Kolom AR)</span></label>
               <select id="editTapak" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 bg-white">
                 <option value="Tidak Diperlukan">Tidak Diperlukan</option>
                 <option value="Perlu Pembersihan Tapak">Perlu Pembersihan Tapak</option>
                 <option value="Sudah Dilakukan Pembersihan">Sudah Dilakukan Pembersihan</option>
               </select>
-            </div>
-            <div>
-              <label class="block text-slate-700 font-semibold mb-1">Rekomendasi Pemeliharaan</label>
-              <input type="text" id="editRekomendasi" placeholder="mis. Pasang Boluves / Jaring" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700">
             </div>
           </div>
 

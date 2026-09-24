@@ -42,14 +42,19 @@ function updateMetrics(dataToCalculate) {
   const elKpiKeraBurungPasang = document.getElementById("kpiKeraBurungPasang");
   if (elKpiKeraBurungPasang) elKpiKeraBurungPasang.innerText = countPasang(keraBurungItems);
 
-  // Aktivitas & Tapak
-  const aktifCount = dataToCalculate.filter(t => t.aktivitas && t.aktivitas !== "Tidak Ada Aktivitas").length;
+  // Aktivitas Satwa (Sesuai & Tidak Sesuai)
+  const sesuaiCount = dataToCalculate.filter(t => t.aktivitas === "Sesuai").length;
+  const tidakSesuaiCount = dataToCalculate.filter(t => t.aktivitas === "Tidak Sesuai").length;
   const tapakCount = dataToCalculate.filter(t => t.tapak && t.tapak !== "Tidak Diperlukan").length;
   
   const elKpiAktif = document.getElementById("kpiAktivitas");
-  if (elKpiAktif) elKpiAktif.innerText = aktifCount;
+  if (elKpiAktif) elKpiAktif.innerText = sesuaiCount.toLocaleString();
+  const elKpiSesuai = document.getElementById("kpiAktivitasSesuai");
+  if (elKpiSesuai) elKpiSesuai.innerText = sesuaiCount.toLocaleString();
+  const elKpiTidak = document.getElementById("kpiAktivitasTidak");
+  if (elKpiTidak) elKpiTidak.innerText = tidakSesuaiCount.toLocaleString();
   const elKpiTapak = document.getElementById("kpiBersihTapak");
-  if (elKpiTapak) elKpiTapak.innerText = tapakCount;
+  if (elKpiTapak) elKpiTapak.innerText = tapakCount.toLocaleString();
 
   // 5 Kotak Metrik Klasifikasi Satwa
   const elBoxBurung = document.getElementById("boxBurungCount");

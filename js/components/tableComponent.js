@@ -48,8 +48,8 @@ function renderTableStructureComponent() {
               <th class="py-3 px-3.5 min-w-[160px]">NAMA HEWAN</th>
               <th class="py-3 px-3.5 min-w-[160px]">PERANGKAT TERPASANG</th>
               <th class="py-3 px-3.5 min-w-[130px]">AKTIVITAS SATWA</th>
-              <th class="py-3 px-3.5 min-w-[160px]">RENCANA TINDAK LANJUT</th>
-              <th class="py-3 px-3.5 min-w-[170px]">REKOMENDASI</th>
+              <th class="py-3 px-3.5 min-w-[180px]">RENCANA TINDAK LANJUT (AQ)</th>
+              <th class="py-3 px-3.5 min-w-[160px]">PEMBERSIHAN TAPAK (AR)</th>
               <th class="py-3 px-3.5 text-center w-28">AKSI</th>
             </tr>
           </thead>

@@ -55,9 +55,10 @@ function renderTable() {
       ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Terpasang</span>`
       : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Belum Terpasang</span>`;
 
-    const actText = item.aktivitas && item.aktivitas !== "Tidak Ada Aktivitas"
-      ? `<span class="text-indigo-600 font-semibold">${item.aktivitas}</span>`
-      : `<span class="text-slate-400">Tidak ada</span>`;
+    const isSesuai = item.aktivitas === "Sesuai";
+    const actText = isSesuai
+      ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Sesuai</span>`
+      : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Tidak Sesuai</span>`;
 
     const row = document.createElement("tr");
     row.className = "hover:bg-slate-50/80 transition-colors";
@@ -79,15 +80,15 @@ function renderTable() {
       </td>
       <td class="py-3 px-3.5 text-[11px]">${actText}</td>
       <td class="py-3 px-3.5 text-[11px]">
-        ${item.tapak && item.tapak.includes("Perlu")
-          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Perlu Bersih Tapak</span>`
-          : `<span class="text-slate-400">Tidak Diperlukan</span>`
+        ${item.rekomendasi && item.rekomendasi !== "-"
+          ? `<span class="text-sky-700 font-semibold">${item.rekomendasi}</span>`
+          : `<span class="text-slate-400">-</span>`
         }
       </td>
       <td class="py-3 px-3.5 text-[11px]">
-        ${item.rekomendasi && item.rekomendasi !== "-"
-          ? `<span class="text-slate-700 font-medium">${item.rekomendasi}</span>`
-          : `<span class="text-slate-400">-</span>`
+        ${item.tapak && item.tapak.includes("Perlu")
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Perlu Bersih Tapak</span>`
+          : `<span class="text-slate-400">Tidak Diperlukan</span>`
         }
       </td>
       <td class="py-3 px-3.5 text-center">
@@ -257,7 +258,7 @@ function exportCSV() {
     return;
   }
 
-  const headers = ["No", "Nama Menara", "Jalur Transmisi", "ULTG", "Binatang 1 (AL)", "Binatang 2 (AM)", "Kategori AP", "Status Proteksi", "Perangkat", "Aktivitas", "Catatan", "Tapak", "Rekomendasi"];
+  const headers = ["No", "Nama Menara", "Jalur Transmisi", "ULTG", "Binatang 1 (AL)", "Binatang 2 (AM)", "Kategori AP", "Status Proteksi", "Perangkat", "Aktivitas", "Rencana Tindak Lanjut (Kolom AQ)", "Pembersihan Tapak (Kolom AR)", "Catatan"];
   const rows = filteredData.map((item, idx) => [
     idx + 1,
     `"${(item.nama || "").replace(/"/g, '""')}"`,
@@ -269,9 +270,9 @@ function exportCSV() {
     `"${(item.proteksi || "").replace(/"/g, '""')}"`,
     `"${(item.perangkat || "").replace(/"/g, '""')}"`,
     `"${(item.aktivitas || "").replace(/"/g, '""')}"`,
-    `"${(item.catatan || "").replace(/"/g, '""')}"`,
+    `"${(item.rekomendasi || "").replace(/"/g, '""')}"`,
     `"${(item.tapak || "").replace(/"/g, '""')}"`,
-    `"${(item.rekomendasi || "").replace(/"/g, '""')}"`
+    `"${(item.catatan || "").replace(/"/g, '""')}"`
   ]);
 
   const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 

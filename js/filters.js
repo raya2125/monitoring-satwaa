@@ -379,11 +379,15 @@ function applyFilters() {
   const proteksi = filterProteksi ? filterProteksi.value : "";
 
   filteredData = towerData.filter(item => {
+    const isGaSesuaiQuery = query === "ga sesuai" || query === "tidak sesuai";
     const matchesQuery = !query || 
+      (isGaSesuaiQuery && item.aktivitas === "Tidak Sesuai") ||
+      (query === "sesuai" && item.aktivitas === "Sesuai") ||
       (item.nama && item.nama.toLowerCase().includes(query)) || 
       (item.jalur && item.jalur.toLowerCase().includes(query)) || 
       (item.kategori && item.kategori.toLowerCase().includes(query)) || 
       (item.perangkat && item.perangkat.toLowerCase().includes(query)) ||
+      (item.aktivitas && item.aktivitas.toLowerCase().includes(query)) ||
       (item.rekomendasi && item.rekomendasi.toLowerCase().includes(query));
 
     const matchesUltg = !ultg || item.ultg === ultg;
