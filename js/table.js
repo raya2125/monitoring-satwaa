@@ -31,7 +31,7 @@ function renderTable() {
   }
 
   if (pageSlice.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-slate-400 font-medium">Tidak ada data menara yang cocok dengan filter yang dipilih.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-400 font-medium">Tidak ada data menara yang cocok dengan filter yang dipilih.</td></tr>`;
     renderPagination();
     return;
   }
@@ -83,12 +83,6 @@ function renderTable() {
         ${item.rekomendasi && item.rekomendasi !== "-"
           ? `<span class="text-sky-700 font-semibold">${item.rekomendasi}</span>`
           : `<span class="text-slate-400">-</span>`
-        }
-      </td>
-      <td class="py-3 px-3.5 text-[11px]">
-        ${item.tapak && item.tapak.includes("Perlu")
-          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Perlu Bersih Tapak</span>`
-          : `<span class="text-slate-400">Tidak Diperlukan</span>`
         }
       </td>
       <td class="py-3 px-3.5 text-center">

@@ -7,7 +7,7 @@ function renderKpiComponent() {
   if (!container) return;
 
   container.innerHTML = `
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
       <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-500 text-xs">
           <span>Total Tower</span>
@@ -60,17 +60,6 @@ function renderKpiComponent() {
         <div class="mt-2">
           <div class="text-2xl font-black text-slate-800" id="kpiAktivitas">0</div>
           <div class="text-[11px] text-emerald-600 font-semibold mt-0.5"><span id="kpiAktivitasSesuai">0</span> Sesuai (<span id="kpiAktivitasTidak" class="text-rose-600 font-bold">0</span> Ga Sesuai)</div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
-        <div class="flex items-center justify-between text-slate-500 text-xs">
-          <span>Bersih Tapak Tower</span>
-          <i data-lucide="wrench" class="w-4 h-4 text-teal-500"></i>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-black text-slate-800" id="kpiBersihTapak">170</div>
-          <div class="text-[11px] text-teal-600 font-semibold mt-0.5">Rencana Tindak Lanjut</div>
         </div>
       </div>
     </div>
