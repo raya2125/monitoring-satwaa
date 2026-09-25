@@ -252,7 +252,7 @@ function exportCSV() {
     return;
   }
 
-  const headers = ["No", "Nama Menara", "Jalur Transmisi", "ULTG", "Binatang 1 (AL)", "Binatang 2 (AM)", "Kategori AP", "Status Proteksi", "Perangkat", "Aktivitas", "Rencana Tindak Lanjut (Kolom AQ)", "Pembersihan Tapak (Kolom AR)", "Catatan"];
+  const headers = ["No", "Nama Menara", "Jalur Transmisi", "ULTG", "Binatang 1 (AL)", "Binatang 2 (AM)", "Kategori AP", "Status Proteksi", "Perangkat", "Aktivitas", "Rekomendasi (Kolom AQ)", "Catatan"];
   const rows = filteredData.map((item, idx) => [
     idx + 1,
     `"${(item.nama || "").replace(/"/g, '""')}"`,
@@ -265,7 +265,6 @@ function exportCSV() {
     `"${(item.perangkat || "").replace(/"/g, '""')}"`,
     `"${(item.aktivitas || "").replace(/"/g, '""')}"`,
     `"${(item.rekomendasi || "").replace(/"/g, '""')}"`,
-    `"${(item.tapak || "").replace(/"/g, '""')}"`,
     `"${(item.catatan || "").replace(/"/g, '""')}"`
   ]);
 
