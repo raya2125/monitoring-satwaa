@@ -25,17 +25,19 @@ function openEditModal(no) {
   } else {
     aktVal = "Tidak Sesuai";
   }
-  document.getElementById("editAktivitas").value = aktVal;
-  document.getElementById("editCatatan").value = item.catatan !== "-" ? (item.catatan || "") : "";
-  document.getElementById("editTapak").value = item.tapak || "Tidak Diperlukan";
-  document.getElementById("editRekomendasi").value = item.rekomendasi !== "-" ? (item.rekomendasi || "") : "";
+  if (document.getElementById("editAktivitas")) document.getElementById("editAktivitas").value = aktVal;
+  if (document.getElementById("editCatatan")) document.getElementById("editCatatan").value = item.catatan !== "-" ? (item.catatan || "") : "";
+  if (document.getElementById("editTapak")) document.getElementById("editTapak").value = item.tapak || "Tidak Diperlukan";
+  if (document.getElementById("editRekomendasi")) document.getElementById("editRekomendasi").value = item.rekomendasi !== "-" ? (item.rekomendasi || "") : "";
 
-  setProteksiStatus(item.proteksi || "BELUM TERPASANG");
+  if (document.getElementById("editProteksi")) setProteksiStatus(item.proteksi || "BELUM TERPASANG");
 
   const checkboxes = document.querySelectorAll("input[name='deviceCheck']");
-  checkboxes.forEach(cb => {
-    cb.checked = item.perangkat && item.perangkat.includes(cb.value);
-  });
+  if (checkboxes && checkboxes.length > 0) {
+    checkboxes.forEach(cb => {
+      cb.checked = item.perangkat && item.perangkat.includes(cb.value);
+    });
+  }
 
   const modal = document.getElementById("editModal");
   if (modal) {
@@ -125,17 +127,20 @@ async function submitTowerUpdate(event) {
     kategori = b2;
   }
 
-  const proteksi = document.getElementById("editProteksi").value;
-  const aktivitas = document.getElementById("editAktivitas").value;
-  const catatan = document.getElementById("editCatatan").value || "-";
-  const tapak = document.getElementById("editTapak").value;
-  const rekomendasi = document.getElementById("editRekomendasi").value || "-";
+  const existingItem = towerData.find(t => t.no === no);
+  const proteksi = (document.getElementById("editProteksi") && document.getElementById("editProteksi").value) || (existingItem ? existingItem.proteksi : "BELUM TERPASANG");
+  const aktivitas = (document.getElementById("editAktivitas") && document.getElementById("editAktivitas").value) || (existingItem ? existingItem.aktivitas : "Sesuai");
+  const catatan = (document.getElementById("editCatatan") && document.getElementById("editCatatan").value) || (existingItem ? existingItem.catatan : "-");
+  const tapak = (document.getElementById("editTapak") && document.getElementById("editTapak").value) || (existingItem ? existingItem.tapak : "Tidak Diperlukan");
+  const rekomendasi = (document.getElementById("editRekomendasi") && document.getElementById("editRekomendasi").value) || (existingItem ? existingItem.rekomendasi : "-");
 
-  const selectedDevices = [];
-  document.querySelectorAll("input[name='deviceCheck']:checked").forEach(cb => {
-    selectedDevices.push(cb.value);
-  });
-  const perangkat = selectedDevices.length > 0 ? selectedDevices.join(", ") : "-";
+  let perangkat = existingItem ? (existingItem.perangkat || "-") : "-";
+  const checkedBoxes = document.querySelectorAll("input[name='deviceCheck']:checked");
+  if (checkedBoxes && checkedBoxes.length > 0) {
+    const selectedDevices = [];
+    checkedBoxes.forEach(cb => selectedDevices.push(cb.value));
+    perangkat = selectedDevices.join(", ");
+  }
 
   const payload = {
     action: "updateTower",
