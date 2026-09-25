@@ -163,18 +163,57 @@ function doPost(e) {
     }
 
     // 4. Kolom AR (44) -> PEMBERSIHAN TAPAK TOWER
-    if (contents.tapak !== undefined) {
-      sheet.getRange(rowIndex, 44).setValue(contents.tapak === "Perlu Pembersihan Tapak" ? "TRUE" : "FALSE");
+    if (contents.tapak !== undefined || contents.tapakBool !== undefined) {
+      const isTapak = contents.tapakBool !== undefined ? Boolean(contents.tapakBool) : (contents.tapak === "Perlu Pembersihan Tapak" || contents.tapak === true || String(contents.tapak).toUpperCase() === "TRUE");
+      sheet.getRange(rowIndex, 44).setValue(isTapak ? "TRUE" : "FALSE");
     }
 
-    // 5. Kolom BC (55) -> Catatan
+    // 5. Kolom AS s.d. BA (45 s.d. 53) -> RENCANA PERANGKAT TINDAK LANJUT
+    // AS (45): BOLUVES
+    if (contents.boluves !== undefined) {
+      sheet.getRange(rowIndex, 45).setValue(Boolean(contents.boluves) ? "TRUE" : "FALSE");
+    }
+    // AT (46): JARING
+    if (contents.jaring !== undefined) {
+      sheet.getRange(rowIndex, 46).setValue(Boolean(contents.jaring) ? "TRUE" : "FALSE");
+    }
+    // AU (47): PEMVES
+    if (contents.pemves !== undefined) {
+      sheet.getRange(rowIndex, 47).setValue(Boolean(contents.pemves) ? "TRUE" : "FALSE");
+    }
+    // AV (48): PELAKOR
+    if (contents.pelakor !== undefined) {
+      sheet.getRange(rowIndex, 48).setValue(Boolean(contents.pelakor) ? "TRUE" : "FALSE");
+    }
+    // AW (49): TOP SKOR
+    if (contents.topSkor !== undefined) {
+      sheet.getRange(rowIndex, 49).setValue(Boolean(contents.topSkor) ? "TRUE" : "FALSE");
+    }
+    // AX (50): IRON MAN
+    if (contents.ironMan !== undefined) {
+      sheet.getRange(rowIndex, 50).setValue(Boolean(contents.ironMan) ? "TRUE" : "FALSE");
+    }
+    // AY (51): KAWAT SILET
+    if (contents.kawatSilet !== undefined) {
+      sheet.getRange(rowIndex, 51).setValue(Boolean(contents.kawatSilet) ? "TRUE" : "FALSE");
+    }
+    // AZ (52): ASB
+    if (contents.asb !== undefined) {
+      sheet.getRange(rowIndex, 52).setValue(Boolean(contents.asb) ? "TRUE" : "FALSE");
+    }
+    // BA (53): TOGAR ABES
+    if (contents.togarAbes !== undefined) {
+      sheet.getRange(rowIndex, 53).setValue(Boolean(contents.togarAbes) ? "TRUE" : "FALSE");
+    }
+
+    // 6. Kolom BC (55) -> Catatan
     if (contents.catatan !== undefined) {
       sheet.getRange(rowIndex, 55).setValue(contents.catatan);
     }
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Data menara " + targetNama + " berhasil ditulis ke Kolom AL & AM!",
+      message: "Data menara " + targetNama + " berhasil diperbarui di spreadsheet!",
       row: rowIndex,
       binatang1: b1,
       binatang2: b2

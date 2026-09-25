@@ -411,8 +411,8 @@ function applyFilters() {
   if (elHeaderTower) elHeaderTower.innerText = towerData.length.toLocaleString("id-ID");
   const elHeaderTindak = document.getElementById("headerCountTindakLanjut");
   if (elHeaderTindak) {
-    const tapakTotal = towerData.filter(t => t.tapak && t.tapak.includes("Perlu")).length;
-    elHeaderTindak.innerText = tapakTotal;
+    const apTotal = towerData.filter(t => t.kolomAP && t.kolomAP.trim() !== "").length;
+    elHeaderTindak.innerText = apTotal;
   }
 
   currentPage = 1;

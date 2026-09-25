@@ -80,15 +80,17 @@ function renderTable() {
       </td>
       <td class="py-3 px-3.5 text-[11px]">${actText}</td>
       <td class="py-3 px-3.5 text-[11px]">
-        ${item.rekomendasi && item.rekomendasi !== "-"
-          ? `<span class="text-sky-700 font-semibold">${item.rekomendasi}</span>`
-          : `<span class="text-slate-400">-</span>`
-        }
+        <button onclick="openModalTindakLanjut(${item.no})" class="text-left group flex items-center gap-1 hover:text-sky-800 transition" title="Klik untuk edit rencana tindak lanjut (Kolom AR-BA)">
+          ${item.rekomendasi && item.rekomendasi !== "-"
+            ? `<span class="text-sky-700 font-semibold group-hover:underline">${item.rekomendasi}</span>`
+            : `<span class="text-slate-400 group-hover:text-slate-600 italic">+ Atur Rencana</span>`
+          }
+        </button>
       </td>
       <td class="py-3 px-3.5 text-center">
         <div class="flex items-center justify-center gap-1">
-          <button onclick="openEditModal(${item.no})" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition" title="Lihat Detail"><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
-          <button onclick="openEditModal(${item.no})" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-600 transition" title="Edit Data"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+          <button onclick="openEditModal(${item.no})" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-600 transition" title="Edit Data Tower & Satwa"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+          <button onclick="openModalTindakLanjut(${item.no})" class="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 transition" title="Isi Rencana Tindak Lanjut (Kolom AR-BA)"><i data-lucide="sliders" class="w-3.5 h-3.5"></i></button>
           <button onclick="deleteRow(${item.no})" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-600 transition" title="Hapus"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
         </div>
       </td>

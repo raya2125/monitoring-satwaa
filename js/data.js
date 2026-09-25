@@ -14,8 +14,9 @@ function initDataset() {
   try {
     // Bersihkan cache lama jika ada
     localStorage.removeItem("trs_plm_tower_data");
+    localStorage.removeItem("trs_plm_tower_data_v2");
 
-    const cached = localStorage.getItem("trs_plm_tower_data_v2");
+    const cached = localStorage.getItem("trs_plm_tower_data_v3");
     if (cached) {
       const parsedCache = JSON.parse(cached);
       if (Array.isArray(parsedCache) && parsedCache.length > 0) {
@@ -38,17 +39,29 @@ function initDataset() {
     }
   }
 
-  // Normalisasi aktivitas menjadi Sesuai atau Tidak Sesuai
+  // Normalisasi aktivitas dan field Kolom AP & Tindak Lanjut (AR-BA)
   towerData.forEach(t => {
-    if (t.aktivitas === "Sesuai" || t.aktivitas === "Tidak Sesuai") return;
-    if (t.aktivitas && (t.aktivitas.toLowerCase().includes("tidak") || t.aktivitas.toLowerCase().includes("ga") || t.aktivitas === "Sering Terlihat Satwa" || t.aktivitas === "Riwayat Gangguan/Trip")) {
-      t.aktivitas = (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" && t.proteksi === "BELUM TERPASANG") ? "Tidak Sesuai" : "Sesuai";
-    } else if (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" && t.proteksi === "BELUM TERPASANG") {
-      t.aktivitas = "Tidak Sesuai";
-    } else {
-      t.aktivitas = "Sesuai";
+    if (t.aktivitas !== "Sesuai" && t.aktivitas !== "Tidak Sesuai") {
+      if (t.aktivitas && (t.aktivitas.toLowerCase().includes("tidak") || t.aktivitas.toLowerCase().includes("ga") || t.aktivitas === "Sering Terlihat Satwa" || t.aktivitas === "Riwayat Gangguan/Trip")) {
+        t.aktivitas = (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" && t.proteksi === "BELUM TERPASANG") ? "Tidak Sesuai" : "Sesuai";
+      } else if (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" && t.proteksi === "BELUM TERPASANG") {
+        t.aktivitas = "Tidak Sesuai";
+      } else {
+        t.aktivitas = "Sesuai";
+      }
     }
     t.rencanaTindakLanjut = t.rekomendasi || "-";
+    t.kolomAP = t.kolomAP || "";
+    t.tapakBool = Boolean(t.tapakBool);
+    t.boluves = Boolean(t.boluves);
+    t.jaring = Boolean(t.jaring);
+    t.pemves = Boolean(t.pemves);
+    t.pelakor = Boolean(t.pelakor);
+    t.topSkor = Boolean(t.topSkor);
+    t.ironMan = Boolean(t.ironMan);
+    t.kawatSilet = Boolean(t.kawatSilet);
+    t.asb = Boolean(t.asb);
+    t.togarAbes = Boolean(t.togarAbes);
   });
 
   filteredData = [...towerData];
@@ -139,17 +152,36 @@ function parseSpreadsheetCSVToTowers(csvText) {
       perangkat = antiBinatang;
     }
 
-    // Rencana Tindak Lanjut (Kolom 42: Kolom AQ)
+    // Kolom AP (Kolom 41: RAWAN BINATANG Belum Terpasang Anti Binatang)
+    const kolomAP = (r[41] || "").trim();
+
+    // Rencana Tindak Lanjut: Rekomendasi (Kolom 42: Kolom AQ)
     const rekomendasi = (r[42] || "-").trim() || "-";
 
-    // Tapak (Kolom 43: PEMBERSIHAN TAPAK TOWER)
-    const tapakRaw = (r[43] || "").trim();
-    const tapak =
-      tapakRaw === "TRUE" ||
-      tapakRaw === "1" ||
-      tapakRaw.toLowerCase().includes("perlu")
-        ? "Perlu Pembersihan Tapak"
-        : "Tidak Diperlukan";
+    // Rencana Tindak Lanjut: Kolom AR sampai BA (Perangkat & Pembersihan)
+    // AR: 43 -> Pembersihan Tapak
+    // AS: 44 -> BOLUVES
+    // AT: 45 -> JARING
+    // AU: 46 -> PEMVES
+    // AV: 47 -> PELAKOR
+    // AW: 48 -> TOP SKOR
+    // AX: 49 -> IRON MAN
+    // AY: 50 -> KAWAT SILET
+    // AZ: 51 -> ASB
+    // BA: 52 -> TOGAR ABES
+    const isChecked = (val) => String(val || "").trim().toUpperCase() === "TRUE";
+    const tapakBool = isChecked(r[43]);
+    const boluves = isChecked(r[44]);
+    const jaring = isChecked(r[45]);
+    const pemves = isChecked(r[46]);
+    const pelakor = isChecked(r[47]);
+    const topSkor = isChecked(r[48]);
+    const ironMan = isChecked(r[49]);
+    const kawatSilet = isChecked(r[50]);
+    const asb = isChecked(r[51]);
+    const togarAbes = isChecked(r[52]);
+
+    const tapak = tapakBool ? "Perlu Pembersihan Tapak" : "Tidak Diperlukan";
 
     // Catatan (Kolom 54: KET KERAWANAN BINATANG NS atau Kolom 40)
     const catatan = (r[54] || r[40] || "-").trim() || "-";
@@ -171,7 +203,18 @@ function parseSpreadsheetCSVToTowers(csvText) {
       aktivitas,
       catatan,
       tapak,
-      rekomendasi
+      rekomendasi,
+      kolomAP,
+      tapakBool,
+      boluves,
+      jaring,
+      pemves,
+      pelakor,
+      topSkor,
+      ironMan,
+      kawatSilet,
+      asb,
+      togarAbes
     });
   }
 
