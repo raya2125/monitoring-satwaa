@@ -884,21 +884,7 @@ async function syncTindakLanjutToSpreadsheet(item) {
       rekomendasi: item.rekomendasi
     };
 
-    if (typeof SCRIPT_URL !== "undefined" && SCRIPT_URL) {
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    }
-
-    const badge = document.getElementById("syncBadge");
-    if (badge) {
-      badge.classList.remove("hidden");
-      badge.classList.add("flex");
-      setTimeout(() => badge.classList.add("hidden"), 3000);
-    }
+    await syncToGoogleSpreadsheet(payload);
   } catch (err) {
     console.error("Gagal sinkronisasi Kolom AR-BA ke Google Sheets:", err);
   }

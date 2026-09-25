@@ -159,12 +159,8 @@ async function submitTowerUpdate(event) {
   };
 
   try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    // Kirim sinkronisasi ke Google Spreadsheet via helper
+    await syncToGoogleSpreadsheet(payload);
 
     // Perbarui data di memori
     const item = towerData.find(t => t.no === no);
@@ -184,17 +180,15 @@ async function submitTowerUpdate(event) {
       item.rencanaTindakLanjut = rekomendasi;
     }
 
-    const badge = document.getElementById("syncBadge");
-    if (badge) {
-      badge.classList.remove("hidden");
-
-      badge.classList.add("flex");
-      setTimeout(() => badge.classList.add("hidden"), 4000);
+    try {
+      localStorage.setItem("trs_plm_tower_data_v3", JSON.stringify(towerData));
+    } catch (e) {
+      console.warn("Gagal simpan ke cache:", e);
     }
 
     applyFilters();
     closeEditModal();
-    alert(`✅ Sukses! Data "${towerName}" telah tersimpan ke Google Sheets TRS_PLM.`);
+    alert(`✅ Sukses! Data "${towerName}" telah dikirim ke Google Sheets TRS_PLM.`);
   } catch (err) {
     console.error("Sinkronisasi gagal:", err);
     alert("⚠️ Gagal terhubung ke Google Apps Script: " + err.message);

@@ -253,7 +253,7 @@ async function loadSpreadsheetData(forceRefresh = false) {
 
       // Simpan ke cache lokal
       try {
-        localStorage.setItem("trs_plm_tower_data_v2", JSON.stringify(towerData));
+        localStorage.setItem("trs_plm_tower_data_v3", JSON.stringify(towerData));
         const now = new Date().toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
@@ -335,5 +335,56 @@ function updateSyncUIStatus(state, message) {
     syncBtnText.textContent = "Menyinkron...";
   } else if (syncBtnText) {
     syncBtnText.textContent = "Sinkronkan";
+  }
+}
+
+/**
+ * Sinkronisasi data ke Google Spreadsheet melalui Google Apps Script (Web App)
+ * Menggunakan POST text/plain (CORS-safelisted) dengan dual fallback GET
+ */
+async function syncToGoogleSpreadsheet(payload) {
+  if (typeof SCRIPT_URL === "undefined" || !SCRIPT_URL) {
+    console.warn("[Sync] SCRIPT_URL belum dikonfigurasi.");
+    return false;
+  }
+
+  const payloadStr = JSON.stringify(payload);
+
+  // Tampilkan badge sinkronisasi di UI
+  const badge = document.getElementById("syncBadge");
+  if (badge) {
+    badge.classList.remove("hidden");
+    badge.classList.add("flex");
+  }
+
+  try {
+    // 1. Metode Utama: POST dengan text/plain (menghindari CORS preflight OPTIONS yang ditolak Google Apps Script)
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: payloadStr
+    });
+
+    // 2. Metode Cadangan: GET Beacon (100% tembus di semua tipe browser tanpa CORS)
+    try {
+      const getUrl = `${SCRIPT_URL}?action=${encodeURIComponent(payload.action || "update")}&payload=${encodeURIComponent(payloadStr)}`;
+      if (getUrl.length < 2000) {
+        const beacon = new Image();
+        beacon.src = getUrl;
+      }
+    } catch (bErr) {
+      // Abaikan jika beacon gagal
+    }
+
+    setTimeout(() => {
+      if (badge) badge.classList.add("hidden");
+    }, 3500);
+
+    return true;
+  } catch (err) {
+    console.error("[Sync] Gagal mengirim data ke spreadsheet:", err);
+    if (badge) badge.classList.add("hidden");
+    return false;
   }
 }

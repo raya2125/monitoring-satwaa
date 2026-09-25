@@ -181,18 +181,7 @@ async function inlineUpdateKategori(no, newKategori) {
       tapak: item.tapak,
       rekomendasi: item.rekomendasi
     };
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const badge = document.getElementById("syncBadge");
-    if (badge) {
-      badge.classList.remove("hidden");
-      badge.classList.add("flex");
-      setTimeout(() => badge.classList.add("hidden"), 3000);
-    }
+    await syncToGoogleSpreadsheet(payload);
   } catch (e) {
     console.error("Gagal sinkron kategori inline:", e);
   }
@@ -222,18 +211,7 @@ async function inlineToggleProteksi(no) {
       tapak: item.tapak,
       rekomendasi: item.rekomendasi
     };
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const badge = document.getElementById("syncBadge");
-    if (badge) {
-      badge.classList.remove("hidden");
-      badge.classList.add("flex");
-      setTimeout(() => badge.classList.add("hidden"), 3000);
-    }
+    await syncToGoogleSpreadsheet(payload);
   } catch (e) {
     console.error("Gagal sinkron proteksi inline:", e);
   }

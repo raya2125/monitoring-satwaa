@@ -4,20 +4,19 @@
  * UPT PALEMBANG
  * =========================================================================
  * 
- * PETUNJUK PEMASANGAN DI GOOGLE SPREADSHEET:
- * 1. Buka Google Spreadsheet TRS_PLM Anda:
+ * PETUNJUK PEMBARUAN DI GOOGLE SPREADSHEET (WAJIB DILAKUKAN):
+ * 1. Buka Google Spreadsheet TRS_PLM:
  *    https://docs.google.com/spreadsheets/d/1IMpg20-ciVpykFKyM4TB60Mt2asL9o1H2thnNYDtudo/edit
  * 2. Klik menu "Extensions" (Ekstensi) > "Apps Script".
- * 3. Hapus semua kode default (myFunction), lalu tempel seluruh isi script ini.
- * 4. Klik ikon "Save" (Disket).
- * 5. Klik tombol biru "Deploy" (Terapkan) di kanan atas > pilih "New deployment" (Penerapan baru).
- * 6. Klik ikon Gear (Roda gigi) di samping 'Select type' > pilih "Web app".
- * 7. PENGATURAN SANGAT PENTING:
- *    - Description: "API Satwa TRS_PLM"
- *    - Execute as: "Me" (Akun Google Anda)
- *    - Who has access: "Anyone" (Siapa saja)  <-- WAJIB PILIH INI agar tidak 403 Forbidden!
- * 8. Klik "Deploy", lalu klik "Authorize Access" dan pilih "Allow".
- * 9. Salin URL Web App yang muncul (akhiran /exec), lalu ganti SCRIPT_URL di js/config.js.
+ * 3. Hapus seluruh isi script lama di editor, lalu paste seluruh isi file ini.
+ * 4. Klik ikon Save (Disket) atau tekan Ctrl+S.
+ * 5. PENTING (Agar Script Baru Aktif):
+ *    - Klik tombol biru "Deploy" (Terapkan) di pojok kanan atas.
+ *    - Pilih "Manage deployments" (Kelola penerapan).
+ *    - Klik ikon Pensil (Edit).
+ *    - Pada dropdown "Version" (Versi), pilih "New version" (Versi baru).
+ *    - Klik tombol "Deploy" (Terapkan).
+ *    - Selesai! Script baru langsung aktif dan menerima input secara realtime.
  */
 
 // Helper: dapatkan sheet data TRS_PLM secara otomatis
@@ -25,16 +24,32 @@ function getTargetSheet(ss) {
   const sheets = ss.getSheets();
   for (let i = 0; i < sheets.length; i++) {
     const name = sheets[i].getName().toUpperCase();
-    if (name.includes("TRS_PLM") || name.includes("KERAWANAN")) {
+    if (name.includes("TRS_PLM") || name.includes("KERAWANAN") || name.includes("DATA")) {
       return sheets[i];
     }
   }
   return ss.getActiveSheet() || sheets[0];
 }
 
-// Handler GET: Verifikasi endpoint dan pembacaan data
+// Handler GET: Verifikasi data dan Fallback Update
 function doGet(e) {
   try {
+    // Jika request GET membawa parameter pembaruan (fallback untuk browser yang memblokir POST)
+    if (e && e.parameter && (e.parameter.action || e.parameter.payload || e.parameter.nama)) {
+      let contents = {};
+      if (e.parameter.payload) {
+        try {
+          contents = JSON.parse(e.parameter.payload);
+        } catch (err) {
+          contents = e.parameter;
+        }
+      } else {
+        contents = e.parameter;
+      }
+      return handleUpdateRequest(contents);
+    }
+
+    // Default GET: Baca seluruh data menara
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = getTargetSheet(ss);
     const data = sheet.getDataRange().getValues();
@@ -48,8 +63,8 @@ function doGet(e) {
 
       const ultg = String(r[1] || "").trim();
       const jalur = String(r[2] || "").trim();
-      const b1 = String(r[37] || "").trim(); // Kolom AL: Binatang 1
-      const b2 = String(r[38] || "").trim(); // Kolom AM: Binatang 2
+      const b1 = String(r[37] || "").trim(); // Kolom AL
+      const b2 = String(r[38] || "").trim(); // Kolom AM
       let kategori = "(Blanks) / Tidak Ada";
       if (b1 && b2) kategori = b1 + ", " + b2;
       else if (b1) kategori = b1;
@@ -73,9 +88,19 @@ function doGet(e) {
         kategori: kategori,
         proteksi: proteksi,
         perangkat: perangkat,
-        aktivitas: (kategori !== "(Blanks) / Tidak Ada" && proteksi === "BELUM TERPASANG") ? "Tidak Sesuai" : "Sesuai",
+        kolomAP: String(r[41] || "").trim(),
         rekomendasi: String(r[42] || "-").trim(),
         tapak: String(r[43] || "FALSE").toUpperCase().includes("TRUE") ? "Perlu Pembersihan Tapak" : "Tidak Diperlukan",
+        tapakBool: String(r[43] || "FALSE").toUpperCase().includes("TRUE"),
+        boluves: String(r[44] || "FALSE").toUpperCase().includes("TRUE"),
+        jaring: String(r[45] || "FALSE").toUpperCase().includes("TRUE"),
+        pemves: String(r[46] || "FALSE").toUpperCase().includes("TRUE"),
+        pelakor: String(r[47] || "FALSE").toUpperCase().includes("TRUE"),
+        topSkor: String(r[48] || "FALSE").toUpperCase().includes("TRUE"),
+        ironMan: String(r[49] || "FALSE").toUpperCase().includes("TRUE"),
+        kawatSilet: String(r[50] || "FALSE").toUpperCase().includes("TRUE"),
+        asb: String(r[51] || "FALSE").toUpperCase().includes("TRUE"),
+        togarAbes: String(r[52] || "FALSE").toUpperCase().includes("TRUE"),
         catatan: String(r[54] || r[40] || "-").trim()
       });
     }
@@ -94,10 +119,32 @@ function doGet(e) {
   }
 }
 
-// Handler POST: Menyimpan pembaruan data menara dari Web Dashboard ke Kolom AL & Kolom AM Spreadsheet
+// Handler POST: Menyimpan pembaruan data menara dari Web Dashboard
 function doPost(e) {
   try {
-    const contents = JSON.parse(e.postData.contents);
+    let contents = {};
+    if (e && e.postData && e.postData.contents) {
+      try {
+        contents = JSON.parse(e.postData.contents);
+      } catch (pErr) {
+        contents = e.parameter || {};
+      }
+    } else if (e && e.parameter) {
+      contents = e.parameter;
+    }
+
+    return handleUpdateRequest(contents);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Logika Inti Penulisan Data ke Spreadsheet
+function handleUpdateRequest(contents) {
+  try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = getTargetSheet(ss);
 
@@ -112,9 +159,11 @@ function doPost(e) {
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
 
-    // Cari baris berdasarkan Nama Menara di Kolom D (index 3)
+    // Cari baris berdasarkan Nama Menara di Kolom D (index 3), fleksibel huruf besar/kecil & spasi
+    const cleanTarget = targetNama.replace(/\s+/g, " ").toLowerCase();
     for (let i = 3; i < data.length; i++) {
-      if (String(data[i][3]).trim() === targetNama) {
+      const rowNama = String(data[i][3] || "").trim().replace(/\s+/g, " ").toLowerCase();
+      if (rowNama === cleanTarget) {
         rowIndex = i + 1; // 1-based index baris sheet
         break;
       }
@@ -123,12 +172,11 @@ function doPost(e) {
     if (rowIndex === -1) {
       return ContentService.createTextOutput(JSON.stringify({
         status: "error",
-        message: "Menara tidak ditemukan: " + targetNama
+        message: "Menara tidak ditemukan di Kolom D: " + targetNama
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 1. TULIS KHUSUS KE KOLOM AL (38: BINATANG 1) & KOLOM AM (39: BINATANG 2)
-    // Formula TEXTJOIN di kolom AN / AP akan otomatis terhitung oleh spreadsheet
+    // 1. TULIS KE KOLOM AL (38: BINATANG 1) & KOLOM AM (39: BINATANG 2)
     let b1 = contents.binatang1;
     let b2 = contents.binatang2;
     if (b1 === undefined && contents.kategori !== undefined) {
@@ -136,19 +184,19 @@ function doPost(e) {
         b1 = "";
         b2 = "";
       } else {
-        const parts = contents.kategori.split(",").map(s => s.trim());
+        const parts = contents.kategori.split(",").map(function(s) { return s.trim(); });
         b1 = parts[0] || "";
         b2 = parts[1] || "";
       }
     }
     if (b1 !== undefined) {
-      sheet.getRange(rowIndex, 38).setValue(b1 || ""); // Kolom AL
+      sheet.getRange(rowIndex, 38).setValue(b1 ? String(b1).toUpperCase() : ""); // Kolom AL
     }
     if (b2 !== undefined) {
-      sheet.getRange(rowIndex, 39).setValue(b2 || ""); // Kolom AM
+      sheet.getRange(rowIndex, 39).setValue(b2 ? String(b2).toUpperCase() : ""); // Kolom AM
     }
 
-    // 2. Kolom AJ (36) -> ANTI BINATANG TERPASANG
+    // 2. TULIS KE KOLOM AJ (36: ANTI BINATANG TERPASANG)
     if (contents.proteksi !== undefined) {
       if (contents.proteksi === "BELUM TERPASANG") {
         sheet.getRange(rowIndex, 36).setValue("TIDAK TERPASANG");
@@ -157,72 +205,69 @@ function doPost(e) {
       }
     }
 
-    // 3. Kolom AQ (43) -> Rekomendasi
+    // 3. TULIS KE KOLOM AQ (43: Rekomendasi)
     if (contents.rekomendasi !== undefined) {
       sheet.getRange(rowIndex, 43).setValue(contents.rekomendasi);
     }
 
-    // 4. Kolom AR (44) -> PEMBERSIHAN TAPAK TOWER
+    // 4. TULIS KE KOLOM AR (44: PEMBERSIHAN TAPAK TOWER)
     if (contents.tapak !== undefined || contents.tapakBool !== undefined) {
-      const isTapak = contents.tapakBool !== undefined ? Boolean(contents.tapakBool) : (contents.tapak === "Perlu Pembersihan Tapak" || contents.tapak === true || String(contents.tapak).toUpperCase() === "TRUE");
+      const isTapak = contents.tapakBool !== undefined 
+        ? Boolean(contents.tapakBool) 
+        : (String(contents.tapak).toUpperCase().includes("PERLU") || contents.tapak === true || String(contents.tapak).toUpperCase() === "TRUE");
       sheet.getRange(rowIndex, 44).setValue(isTapak ? "TRUE" : "FALSE");
     }
 
-    // 5. Kolom AS s.d. BA (45 s.d. 53) -> RENCANA PERANGKAT TINDAK LANJUT
-    // AS (45): BOLUVES
+    // 5. TULIS KE KOLOM AS s.d. BA (45 s.d. 53: RENCANA PERANGKAT TINDAK LANJUT)
+    const toBoolStr = function(val) {
+      return (val === true || String(val).toUpperCase() === "TRUE" || val === 1 || val === "1") ? "TRUE" : "FALSE";
+    };
+
     if (contents.boluves !== undefined) {
-      sheet.getRange(rowIndex, 45).setValue(Boolean(contents.boluves) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 45).setValue(toBoolStr(contents.boluves)); // AS: BOLUVES
     }
-    // AT (46): JARING
     if (contents.jaring !== undefined) {
-      sheet.getRange(rowIndex, 46).setValue(Boolean(contents.jaring) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 46).setValue(toBoolStr(contents.jaring)); // AT: JARING
     }
-    // AU (47): PEMVES
     if (contents.pemves !== undefined) {
-      sheet.getRange(rowIndex, 47).setValue(Boolean(contents.pemves) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 47).setValue(toBoolStr(contents.pemves)); // AU: PEMVES
     }
-    // AV (48): PELAKOR
     if (contents.pelakor !== undefined) {
-      sheet.getRange(rowIndex, 48).setValue(Boolean(contents.pelakor) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 48).setValue(toBoolStr(contents.pelakor)); // AV: PELAKOR
     }
-    // AW (49): TOP SKOR
     if (contents.topSkor !== undefined) {
-      sheet.getRange(rowIndex, 49).setValue(Boolean(contents.topSkor) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 49).setValue(toBoolStr(contents.topSkor)); // AW: TOP SKOR
     }
-    // AX (50): IRON MAN
     if (contents.ironMan !== undefined) {
-      sheet.getRange(rowIndex, 50).setValue(Boolean(contents.ironMan) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 50).setValue(toBoolStr(contents.ironMan)); // AX: IRON MAN
     }
-    // AY (51): KAWAT SILET
     if (contents.kawatSilet !== undefined) {
-      sheet.getRange(rowIndex, 51).setValue(Boolean(contents.kawatSilet) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 51).setValue(toBoolStr(contents.kawatSilet)); // AY: KAWAT SILET
     }
-    // AZ (52): ASB
     if (contents.asb !== undefined) {
-      sheet.getRange(rowIndex, 52).setValue(Boolean(contents.asb) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 52).setValue(toBoolStr(contents.asb)); // AZ: ASB
     }
-    // BA (53): TOGAR ABES
     if (contents.togarAbes !== undefined) {
-      sheet.getRange(rowIndex, 53).setValue(Boolean(contents.togarAbes) ? "TRUE" : "FALSE");
+      sheet.getRange(rowIndex, 53).setValue(toBoolStr(contents.togarAbes)); // BA: TOGAR ABES
     }
 
-    // 6. Kolom BC (55) -> Catatan
+    // 6. TULIS KE KOLOM BC (55: Catatan)
     if (contents.catatan !== undefined) {
       sheet.getRange(rowIndex, 55).setValue(contents.catatan);
     }
 
+    SpreadsheetApp.flush();
+
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Data menara " + targetNama + " berhasil diperbarui di spreadsheet!",
-      row: rowIndex,
-      binatang1: b1,
-      binatang2: b2
+      message: "Data menara " + targetNama + " berhasil disimpan ke Spreadsheet!",
+      row: rowIndex
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
-      message: err.toString()
+      message: "Gagal memproses update: " + err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
