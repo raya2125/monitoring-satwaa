@@ -1,6 +1,6 @@
 /**
  * KOMPONEN: STRUKTUR DATA TABLE & PAGINASI
- * Sesuai desain Screenshot 2: Daftar Menara Transmisi & Status Proteksi
+ * Header tabel dirender secara dinamis oleh table.js sesuai tab aktif (Manajemen Asset vs Kerawanan Satwa)
  */
 
 function renderTableStructureComponent() {
@@ -45,17 +45,8 @@ function renderTableStructureComponent() {
       <!-- TABLE WRAPPER -->
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr class="bg-slate-50/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-semibold">
-              <th class="py-3 px-3.5 w-12 text-center">NO</th>
-              <th class="py-3 px-3.5 min-w-[220px]">TOWER & JALUR SUTT</th>
-              <th class="py-3 px-3.5 min-w-[120px]">ULTG</th>
-              <th class="py-3 px-3.5 min-w-[150px]">NAMA HEWAN</th>
-              <th class="py-3 px-3.5 min-w-[200px]">PERANGKAT TERPASANG (KOLOM E–Z)</th>
-              <th class="py-3 px-3.5 min-w-[130px]">AKTIVITAS SATWA</th>
-              <th class="py-3 px-3.5 min-w-[180px]">REKOMENDASI</th>
-              <th class="py-3 px-3.5 text-center w-32">AKSI</th>
-            </tr>
+          <thead id="towerTableHead">
+            <!-- Diisi secara dinamis oleh table.js sesuai tab aktif -->
           </thead>
           <tbody id="towerTableBody" class="divide-y divide-slate-100 font-normal">
             <!-- Diisi secara dinamis oleh table.js -->
