@@ -39,7 +39,7 @@ function renderTindakLanjutComponent() {
                 </span>
               </div>
               <p class="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                Kelola rencana pengadaan dan pemasangan perangkat proteksi anti-binatang (Kolom AS–BA) serta pembersihan tapak tower (Kolom AR) khusus untuk menara yang berstatus rawan dan belum terlindungi.
+                Kelola rencana pengadaan dan pemasangan perangkat proteksi anti-binatang (Kolom AS–BA) khusus untuk menara yang berstatus rawan dan belum terlindungi.
               </p>
             </div>
           </div>
@@ -62,25 +62,17 @@ function renderTindakLanjutComponent() {
         </div>
       </div>
 
-      <!-- 2. REKAP KEBUTUHAN PERANGKAT (KOLOM AR - BA) -->
+      <!-- 2. REKAP KEBUTUHAN PERANGKAT (KOLOM AS - BA) -->
       <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
         <div class="flex items-center justify-between text-xs font-bold text-slate-700">
           <span class="flex items-center gap-2 uppercase tracking-wide">
             <i data-lucide="layers" class="w-4 h-4 text-sky-600"></i>
-            Rekap Kebutuhan Perangkat & Tindak Lanjut (Kolom AR s.d. BA)
+            Rekap Kebutuhan Perangkat & Tindak Lanjut (Kolom AS s.d. BA)
           </span>
           <span class="text-slate-400 font-normal text-[11px]">Dihitung dari data realtime</span>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs">
-          <!-- AR: TAPAK -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div>
-              <div class="font-bold text-slate-700 text-[11px]">Tapak Tower (AR)</div>
-              <div class="text-[10px] text-slate-400">Pembersihan</div>
-            </div>
-            <span id="rekapCountTapak" class="text-sm font-extrabold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-lg">0</span>
-          </div>
 
           <!-- AS: BOLUVES -->
           <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
@@ -165,11 +157,11 @@ function renderTindakLanjutComponent() {
         </div>
       </div>
 
-      <!-- 3. TABEL RENCANA TINDAK LANJUT (KOLOM AR - BA) -->
+      <!-- 3. TABEL RENCANA TINDAK LANJUT (KOLOM AS - BA) -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Tabel Pengisian Kolom AR s.d. BA</span>
+            <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Tabel Pengisian Kolom AS s.d. BA</span>
             <span id="tindakLanjutTableBadgeCount" class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-slate-100 text-slate-600">0 Data</span>
           </div>
           <div class="text-xs text-slate-400">
@@ -185,7 +177,6 @@ function renderTindakLanjutComponent() {
                 <th class="py-3 px-3.5 min-w-[200px]">TOWER & JALUR SUTT</th>
                 <th class="py-3 px-3.5 min-w-[130px]">ULTG</th>
                 <th class="py-3 px-3.5 min-w-[140px]">RAWAN (KOLOM AP)</th>
-                <th class="py-3 px-3.5 min-w-[150px] text-center">TAPAK TOWER (AR)</th>
                 <th class="py-3 px-3.5 min-w-[280px]">RENCANA PERANGKAT (KOLOM AS - BA)</th>
                 <th class="py-3 px-3.5 text-center w-36">AKSI</th>
               </tr>
@@ -217,7 +208,7 @@ function renderTindakLanjutComponent() {
 
     </div>
 
-    <!-- 5. DEDICATED MODAL: EDIT RENCANA TINDAK LANJUT (KOLOM AR s.d. BA) -->
+    <!-- 5. DEDICATED MODAL: EDIT RENCANA TINDAK LANJUT (KOLOM AS s.d. BA) -->
     <div id="modalTindakLanjutAR_BA" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
       <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 my-8 relative">
         
@@ -229,7 +220,7 @@ function renderTindakLanjutComponent() {
             </div>
             <div>
               <h3 class="text-base font-bold text-slate-800">Pengisian Rencana Tindak Lanjut</h3>
-              <p class="text-xs text-slate-400 mt-0.5">Centang perangkat dan pembersihan tapak untuk mengisi Kolom AR s.d. BA di Spreadsheet.</p>
+              <p class="text-xs text-slate-400 mt-0.5">Centang perangkat yang direncanakan untuk mengisi Kolom AS s.d. BA di Spreadsheet.</p>
             </div>
           </div>
           <button onclick="closeModalTindakLanjut()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition">
@@ -242,27 +233,11 @@ function renderTindakLanjutComponent() {
           <!-- Diisi otomatis -->
         </div>
 
-        <!-- FORM CHECKLIST (KOLOM AR s.d. BA) -->
+        <!-- FORM CHECKLIST (KOLOM AS s.d. BA) -->
         <form id="formTindakLanjutAR_BA" onsubmit="submitTindakLanjutUpdate(event)" class="space-y-4">
           <input type="hidden" id="editTindakLanjutTowerNo">
 
-          <!-- BAGIAN 1: PEMELIHARAAN TAPAK (KOLOM AR) -->
-          <div class="space-y-2">
-            <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-              <i data-lucide="tree-pine" class="w-4 h-4 text-amber-600"></i>
-              Pemeliharaan Lingkungan Tapak Tower (Kolom AR)
-            </div>
-            
-            <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/30 transition cursor-pointer">
-              <input type="checkbox" id="modalCheckTapak" class="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500">
-              <div class="text-xs">
-                <span class="font-bold text-slate-800">Pembersihan Tapak Tower (Kolom AR)</span>
-                <span class="block text-[11px] text-slate-500">Pembersihan semak, gulma, atau pepohonan liar di sekitar tapak menara</span>
-              </div>
-            </label>
-          </div>
 
-          <!-- BAGIAN 2: PENGADAAN & PEMASANGAN PERANGKAT (KOLOM AS s.d. BA) -->
           <div class="space-y-2 pt-1">
             <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center justify-between">
               <span class="flex items-center gap-1.5">
@@ -424,10 +399,9 @@ function getFilteredTindakLanjutData() {
   return list;
 }
 
-// Cek apakah menara sudah memiliki minimal 1 centang di kolom AR s.d. BA
+// Cek apakah menara sudah memiliki minimal 1 centang di kolom AS s.d. BA
 function hasAnyTindakLanjut(t) {
   return Boolean(
-    t.tapakBool ||
     t.boluves ||
     t.jaring ||
     t.pemves ||
@@ -460,10 +434,9 @@ function updateTindakLanjutView() {
   const elStatBelum = document.getElementById("statBelumRencana");
   if (elStatBelum) elStatBelum.innerText = belumCount;
 
-  // 2. Hitung Rekap Kebutuhan Perangkat AR - BA
+  // 2. Hitung Rekap Kebutuhan Perangkat AS - BA
   const targetDataSet = tindakLanjutScopeOnlyAP ? allAPList : towerData;
 
-  const countTapak = targetDataSet.filter(t => t.tapakBool).length;
   const countBoluves = targetDataSet.filter(t => t.boluves).length;
   const countJaring = targetDataSet.filter(t => t.jaring).length;
   const countPemves = targetDataSet.filter(t => t.pemves).length;
@@ -474,7 +447,6 @@ function updateTindakLanjutView() {
   const countAsb = targetDataSet.filter(t => t.asb).length;
   const countTogarAbes = targetDataSet.filter(t => t.togarAbes).length;
 
-  if (document.getElementById("rekapCountTapak")) document.getElementById("rekapCountTapak").innerText = countTapak;
   if (document.getElementById("rekapCountBoluves")) document.getElementById("rekapCountBoluves").innerText = countBoluves;
   if (document.getElementById("rekapCountJaring")) document.getElementById("rekapCountJaring").innerText = countJaring;
   if (document.getElementById("rekapCountPemves")) document.getElementById("rekapCountPemves").innerText = countPemves;
@@ -496,7 +468,7 @@ function updateTindakLanjutView() {
   if (currentList.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="py-12 text-center text-slate-400">
+        <td colspan="6" class="py-12 text-center text-slate-400">
           <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
           <div>Tidak ada menara yang sesuai dengan kriteria filter tindak lanjut ini.</div>
         </td>
@@ -554,12 +526,6 @@ function updateTindakLanjutView() {
         `</div>`;
     }
 
-    // Tapak Toggle Button (Kolom AR)
-    const tapakBtnClass = item.tapakBool
-      ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
-      : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200";
-    const tapakBtnText = item.tapakBool ? "✓ Perlu Bersih" : "Tidak Perlu";
-
     return `
       <tr class="hover:bg-slate-50/80 transition">
         <td class="py-3 px-3.5 text-center text-slate-400 font-medium">${globalIdx}</td>
@@ -571,11 +537,6 @@ function updateTindakLanjutView() {
           <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">${item.ultg}</span>
         </td>
         <td class="py-3 px-3.5">${satwaBadge}</td>
-        <td class="py-3 px-3.5 text-center">
-          <button onclick="quickToggleTapak(${item.no})" class="px-2.5 py-1 rounded-lg text-xs border transition ${tapakBtnClass}" title="Klik untuk cepat mengubah Kolom AR">
-            ${tapakBtnText}
-          </button>
-        </td>
         <td class="py-3 px-3.5">${devicesHtml}</td>
         <td class="py-3 px-3.5 text-center">
           <button onclick="openModalTindakLanjut(${item.no})" class="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-semibold border border-sky-200 flex items-center justify-center gap-1.5 mx-auto transition">
@@ -752,7 +713,6 @@ function openModalTindakLanjut(no) {
   document.getElementById("editTindakLanjutTowerNo").value = no;
 
   // Set Centang Form sesuai data menara
-  document.getElementById("modalCheckTapak").checked = Boolean(item.tapakBool);
   document.getElementById("modalCheckBoluves").checked = Boolean(item.boluves);
   document.getElementById("modalCheckJaring").checked = Boolean(item.jaring);
   document.getElementById("modalCheckPemves").checked = Boolean(item.pemves);
@@ -788,10 +748,7 @@ async function submitTindakLanjutUpdate(event) {
   const item = towerData.find(t => t.no === no);
   if (!item) return;
 
-  // Baca nilai form (Kolom AR sampai BA)
-  item.tapakBool = document.getElementById("modalCheckTapak").checked;
-  item.tapak = item.tapakBool ? "Perlu Pembersihan Tapak" : "Tidak Diperlukan";
-
+  // Baca nilai form (Kolom AS sampai BA)
   item.boluves = document.getElementById("modalCheckBoluves").checked;
   item.jaring = document.getElementById("modalCheckJaring").checked;
   item.pemves = document.getElementById("modalCheckPemves").checked;
@@ -816,8 +773,6 @@ async function submitTindakLanjutUpdate(event) {
 
   if (activeDevs.length > 0) {
     item.rekomendasi = activeDevs.join(", ");
-  } else if (item.tapakBool) {
-    item.rekomendasi = "Pembersihan Tapak Tower";
   } else {
     item.rekomendasi = "-";
   }
@@ -851,8 +806,6 @@ async function syncTindakLanjutToSpreadsheet(item) {
       nama: item.nama,
       ultg: item.ultg,
       jalur: item.jalur,
-      tapak: item.tapakBool,
-      tapakBool: item.tapakBool,
       boluves: item.boluves,
       jaring: item.jaring,
       pemves: item.pemves,
