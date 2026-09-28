@@ -405,7 +405,13 @@ function getFilteredTindakLanjutData() {
 
   // 4. Filter Satwa Kolom AP
   if (tindakLanjutSatwaFilter) {
-    list = list.filter(t => t.kolomAP && t.kolomAP.toUpperCase().includes(tindakLanjutSatwaFilter));
+    const filterNorm = tindakLanjutSatwaFilter.toUpperCase().replace(/\s*,\s*/g, ", ").trim();
+    list = list.filter(t => {
+      const apVal = (t.kolomAP || "").toUpperCase().replace(/\s*,\s*/g, ", ").trim();
+      const katVal = (t.kategori && t.kategori !== "(Blanks) / Tidak Ada" ? t.kategori : "").toUpperCase().replace(/\s*,\s*/g, ", ").trim();
+      const val = apVal || katVal;
+      return val === filterNorm;
+    });
   }
 
   // 5. Filter Status Rencana
@@ -510,11 +516,18 @@ function updateTindakLanjutView() {
     // Satwa Badge (Kolom AP)
     const satwaText = item.kolomAP || (item.kategori && item.kategori !== "(Blanks) / Tidak Ada" ? item.kategori : "-");
     let satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">-</span>`;
-    if (satwaText.includes("KERA")) {
+    const satwaUpper = satwaText.toUpperCase();
+    if (satwaUpper.includes("KERA") && satwaUpper.includes("BURUNG")) {
+      satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-800 border border-purple-200">🐒🦅 ${satwaText}</span>`;
+    } else if (satwaUpper.includes("ULAR") && satwaUpper.includes("BURUNG")) {
+      satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-pink-50 text-pink-800 border border-pink-200">🐍🦅 ${satwaText}</span>`;
+    } else if (satwaUpper.includes("KERA") && satwaUpper.includes("ULAR")) {
+      satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">🐒🐍 ${satwaText}</span>`;
+    } else if (satwaUpper.includes("KERA")) {
       satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">🐒 ${satwaText}</span>`;
-    } else if (satwaText.includes("ULAR")) {
+    } else if (satwaUpper.includes("ULAR")) {
       satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">🐍 ${satwaText}</span>`;
-    } else if (satwaText.includes("BURUNG")) {
+    } else if (satwaUpper.includes("BURUNG")) {
       satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200">🦅 ${satwaText}</span>`;
     } else if (satwaText !== "-") {
       satwaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">${satwaText}</span>`;

@@ -231,12 +231,15 @@ function renderFilterComponent() {
         </div>
 
         <!-- FILTER SATWA (KOLOM AP) -->
-        <div class="w-36">
-          <select id="tindakLanjutFilterSatwa" onchange="onTindakLanjutSatwaChange(this.value)" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:ring-1 focus:ring-sky-500">
+        <div class="w-48 md:w-52">
+          <select id="tindakLanjutFilterSatwa" onchange="onTindakLanjutSatwaChange(this.value)" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-1 focus:ring-sky-500">
             <option value="">Semua Satwa</option>
             <option value="KERA">🐒 KERA</option>
             <option value="ULAR">🐍 ULAR</option>
             <option value="BURUNG">🦅 BURUNG</option>
+            <option value="KERA, BURUNG">🐒🦅 KERA, BURUNG</option>
+            <option value="ULAR, BURUNG">🐍🦅 ULAR, BURUNG</option>
+            <option value="KERA, ULAR">🐒🐍 KERA, ULAR</option>
           </select>
         </div>
 
