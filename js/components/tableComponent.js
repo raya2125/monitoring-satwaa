@@ -13,7 +13,12 @@ function renderTableStructureComponent() {
       <!-- TOP TABLE HEADER & CONTROLS -->
       <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 class="text-sm font-bold text-slate-800">Daftar Menara Transmisi & Status Proteksi</h3>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 id="tableMainTitle" class="text-sm font-bold text-slate-800">Daftar Menara Transmisi & Status Proteksi</h3>
+            <span id="tableFocusBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Fokus: Pemasangan Proteksi (Kolom E s.d. Z)
+            </span>
+          </div>
           <p class="text-[11px] text-slate-400 mt-0.5">
             Menampilkan <span id="tableRangeText" class="font-semibold text-slate-600">1 - 25</span> dari <span id="tableFilteredTotal" class="font-semibold text-slate-600">3201</span> tower [Total data: <span id="tableTotalData" class="font-semibold text-slate-600">3201</span>]
           </p>
@@ -45,11 +50,11 @@ function renderTableStructureComponent() {
               <th class="py-3 px-3.5 w-12 text-center">NO</th>
               <th class="py-3 px-3.5 min-w-[220px]">TOWER & JALUR SUTT</th>
               <th class="py-3 px-3.5 min-w-[120px]">ULTG</th>
-              <th class="py-3 px-3.5 min-w-[160px]">NAMA HEWAN</th>
-              <th class="py-3 px-3.5 min-w-[160px]">PERANGKAT TERPASANG</th>
+              <th class="py-3 px-3.5 min-w-[150px]">NAMA HEWAN</th>
+              <th class="py-3 px-3.5 min-w-[200px]">PERANGKAT TERPASANG (KOLOM E–Z)</th>
               <th class="py-3 px-3.5 min-w-[130px]">AKTIVITAS SATWA</th>
               <th class="py-3 px-3.5 min-w-[180px]">REKOMENDASI</th>
-              <th class="py-3 px-3.5 text-center w-28">AKSI</th>
+              <th class="py-3 px-3.5 text-center w-32">AKSI</th>
             </tr>
           </thead>
           <tbody id="towerTableBody" class="divide-y divide-slate-100 font-normal">

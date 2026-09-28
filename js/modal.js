@@ -1,122 +1,120 @@
 /**
- * PENGELOLAAN MODAL TAMBAH & EDIT DATA MENARA
- * SINKRONISASI REALTIME KE GOOGLE SHEETS
+ * PENGELOLAAN MODAL SINKRONISASI REALTIME KE GOOGLE SHEETS
+ * PLN UPT Palembang
+ * 
+ * Pemisahan Fungsional:
+ * 1. Tab Kerawanan Satwa -> Modal Satwa (Kolom AL & Kolom AM)
+ * 2. Tab Manajemen Asset -> Modal Proteksi (Kolom E s.d. Kolom Z)
  */
 
-// Buka modal edit data
-function openEditModal(no) {
+// =========================================================================
+// 1. MODAL KHUSUS TAB KERAWANAN SATWA (KOLOM AL & KOLOM AM)
+// =========================================================================
+
+// Buka modal input/edit Kerawanan Satwa (Kolom AL & AM)
+function openModalSatwaALAM(no) {
   const item = towerData.find(t => t.no === no);
   if (!item) return;
 
-  document.getElementById("editRowNumber").value = item.no;
-  document.getElementById("editTowerName").value = item.nama;
-  document.getElementById("editUltg").value = item.ultg;
-  updateEditJalurOptions(item.jalur);
+  // Header info
+  const elNo = document.getElementById("satwaTowerNo");
+  if (elNo) elNo.value = item.no;
 
-  // Set nilai Kolom AL (Binatang 1) dan Kolom AM (Binatang 2)
-  const b1 = item.binatang1 || (item.kategori && item.kategori !== "(Blanks) / Tidak Ada" ? item.kategori.split(",")[0].trim() : "");
-  const b2 = item.binatang2 || (item.kategori && item.kategori.includes(",") ? item.kategori.split(",")[1].trim() : "");
-  if (document.getElementById("editBinatang1")) document.getElementById("editBinatang1").value = b1;
-  if (document.getElementById("editBinatang2")) document.getElementById("editBinatang2").value = b2;
+  const elNamaHidden = document.getElementById("satwaTowerNamaHidden");
+  if (elNamaHidden) elNamaHidden.value = item.nama;
 
-  let aktVal = item.aktivitas || "Sesuai";
-  if (aktVal === "Tidak Ada Aktivitas" || aktVal === "Terlihat Aktivitas Ringan" || aktVal === "Sesuai") {
-    aktVal = "Sesuai";
-  } else {
-    aktVal = "Tidak Sesuai";
-  }
-  if (document.getElementById("editAktivitas")) document.getElementById("editAktivitas").value = aktVal;
-  if (document.getElementById("editCatatan")) document.getElementById("editCatatan").value = item.catatan !== "-" ? (item.catatan || "") : "";
-  if (document.getElementById("editTapak")) document.getElementById("editTapak").value = item.tapak || "Tidak Diperlukan";
-  if (document.getElementById("editRekomendasi")) document.getElementById("editRekomendasi").value = item.rekomendasi !== "-" ? (item.rekomendasi || "") : "";
+  const elName = document.getElementById("satwaModalTowerName");
+  if (elName) elName.innerText = item.nama;
 
-  if (document.getElementById("editProteksi")) setProteksiStatus(item.proteksi || "BELUM TERPASANG");
+  const elJalur = document.getElementById("satwaModalJalur");
+  if (elJalur) elJalur.innerText = item.jalur;
 
-  const checkboxes = document.querySelectorAll("input[name='deviceCheck']");
-  if (checkboxes && checkboxes.length > 0) {
-    checkboxes.forEach(cb => {
-      cb.checked = item.perangkat && item.perangkat.includes(cb.value);
-    });
+  const elUltg = document.getElementById("satwaModalUltg");
+  if (elUltg) elUltg.innerText = item.ultg;
+
+  // Ekstrak Kolom AL (Binatang 1) & Kolom AM (Binatang 2)
+  let b1 = item.binatang1 || "";
+  let b2 = item.binatang2 || "";
+  if (!b1 && item.kategori && item.kategori !== "(Blanks) / Tidak Ada" && item.kategori !== "-") {
+    const parts = item.kategori.split(",").map(s => s.trim().toUpperCase());
+    b1 = parts[0] || "";
+    b2 = parts[1] || "";
   }
 
-  const modal = document.getElementById("editModal");
+  const elB1 = document.getElementById("satwaBinatang1");
+  if (elB1) elB1.value = b1;
+
+  const elB2 = document.getElementById("satwaBinatang2");
+  if (elB2) elB2.value = b2;
+
+  // Aktivitas & Catatan
+  const elAkt = document.getElementById("satwaAktivitas");
+  if (elAkt) elAkt.value = (item.aktivitas === "Tidak Sesuai") ? "Tidak Sesuai" : "Sesuai";
+
+  const elCat = document.getElementById("satwaCatatan");
+  if (elCat) elCat.value = item.catatan !== "-" ? (item.catatan || "") : "";
+
+  // Pratinjau
+  updateSatwaLivePreview();
+
+  const modal = document.getElementById("modalSatwaALAM");
   if (modal) {
     modal.classList.remove("hidden");
     modal.classList.add("flex");
   }
+
+  if (window.lucide) window.lucide.createIcons();
 }
 
-// Tutup modal edit
-function closeEditModal() {
-  const modal = document.getElementById("editModal");
+// Tutup modal Satwa (Kolom AL & AM)
+function closeModalSatwaALAM() {
+  const modal = document.getElementById("modalSatwaALAM");
   if (modal) {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
   }
 }
 
-// Toggle tombol status proteksi di modal
-function setProteksiStatus(status) {
-  const input = document.getElementById("editProteksi");
-  if (input) input.value = status;
+// Update pratinjau kategori satwa secara realtime saat dropdown diubah
+function updateSatwaLivePreview() {
+  const b1 = (document.getElementById("satwaBinatang1") ? document.getElementById("satwaBinatang1").value : "").trim();
+  const b2 = (document.getElementById("satwaBinatang2") ? document.getElementById("satwaBinatang2").value : "").trim();
 
-  const btnPasang = document.getElementById("btnTogglePasang");
-  const btnBelum = document.getElementById("btnToggleBelum");
+  let previewText = "(Blanks) / Tidak Ada";
+  if (b1 && b2) {
+    previewText = `${b1}, ${b2}`;
+  } else if (b1) {
+    previewText = b1;
+  } else if (b2) {
+    previewText = b2;
+  }
 
-  if (status === "TERPASANG") {
-    if (btnPasang) btnPasang.className = "flex-1 py-2 rounded-lg font-bold bg-[#0284c7] text-white transition";
-    if (btnBelum) btnBelum.className = "flex-1 py-2 rounded-lg font-bold border border-slate-200 text-slate-600 bg-slate-50 transition";
-  } else {
-    if (btnPasang) btnPasang.className = "flex-1 py-2 rounded-lg font-bold border border-slate-200 text-slate-600 bg-slate-50 transition";
-    if (btnBelum) btnBelum.className = "flex-1 py-2 rounded-lg font-bold bg-[#1e293b] text-white transition";
+  const elPreview = document.getElementById("satwaPreviewKategori");
+  if (elPreview) {
+    elPreview.innerText = previewText;
+    if (previewText === "(Blanks) / Tidak Ada") {
+      elPreview.className = "font-bold text-slate-500 bg-white px-2.5 py-0.5 rounded border border-slate-200";
+    } else {
+      elPreview.className = "font-bold text-sky-800 bg-white px-2.5 py-0.5 rounded border border-sky-300";
+    }
   }
 }
 
-// Update pilihan dropdown jalur pada modal edit sesuai ULTG terpilih
-function updateEditJalurOptions(selectedJalur = "") {
-  const editUltg = document.getElementById("editUltg");
-  const editJalur = document.getElementById("editJalur");
-  if (!editUltg || !editJalur) return;
-
-  const ultgVal = editUltg.value;
-  const jalurs = getJalursForUltg(ultgVal);
-
-  let optionsHtml = `<option value="">-- Pilih Jalur SUTT/SUTET --</option>`;
-  jalurs.forEach(j => {
-    optionsHtml += `<option value="${j}">${j}</option>`;
-  });
-
-  if (selectedJalur && !jalurs.includes(selectedJalur)) {
-    optionsHtml += `<option value="${selectedJalur}">${selectedJalur}</option>`;
-  }
-
-  editJalur.innerHTML = optionsHtml;
-  if (selectedJalur) {
-    editJalur.value = selectedJalur;
-  }
-}
-
-function onEditUltgChange() {
-  updateEditJalurOptions("");
-}
-
-// Simpan perubahan ke Google Sheets TRS_PLM
-async function submitTowerUpdate(event) {
+// Submit data satwa Kolom AL & Kolom AM ke Google Sheets
+async function submitSatwaALAMUpdate(event) {
   event.preventDefault();
 
-  const btnSubmit = document.getElementById("btnSubmitEdit");
-  const originalText = btnSubmit.innerHTML;
-  btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Menyimpan ke Spreadsheet...`;
+  const btnSubmit = document.getElementById("btnSubmitSatwaALAM");
+  const originalHtml = btnSubmit.innerHTML;
+  btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Menyimpan ke Kolom AL & AM...`;
   btnSubmit.disabled = true;
 
-  const no = parseInt(document.getElementById("editRowNumber").value, 10);
-  const towerName = document.getElementById("editTowerName").value;
-  const ultg = document.getElementById("editUltg").value;
-  const jalur = document.getElementById("editJalur").value;
-
-  // Baca input khusus Kolom AL (Binatang 1) dan Kolom AM (Binatang 2)
-  const b1 = (document.getElementById("editBinatang1") ? document.getElementById("editBinatang1").value : "").trim();
-  const b2 = (document.getElementById("editBinatang2") ? document.getElementById("editBinatang2").value : "").trim();
+  const no = parseInt(document.getElementById("satwaTowerNo").value, 10);
+  const towerName = document.getElementById("satwaTowerNamaHidden").value;
+  const b1 = (document.getElementById("satwaBinatang1") ? document.getElementById("satwaBinatang1").value : "").trim();
+  const b2 = (document.getElementById("satwaBinatang2") ? document.getElementById("satwaBinatang2").value : "").trim();
+  const aktivitas = (document.getElementById("satwaAktivitas") ? document.getElementById("satwaAktivitas").value : "Sesuai");
+  const catatan = (document.getElementById("satwaCatatan") ? document.getElementById("satwaCatatan").value : "").trim() || "-";
 
   let kategori = "(Blanks) / Tidak Ada";
   if (b1 && b2) {
@@ -127,57 +125,35 @@ async function submitTowerUpdate(event) {
     kategori = b2;
   }
 
-  const existingItem = towerData.find(t => t.no === no);
-  const proteksi = (document.getElementById("editProteksi") && document.getElementById("editProteksi").value) || (existingItem ? existingItem.proteksi : "BELUM TERPASANG");
-  const aktivitas = (document.getElementById("editAktivitas") && document.getElementById("editAktivitas").value) || (existingItem ? existingItem.aktivitas : "Sesuai");
-  const catatan = (document.getElementById("editCatatan") && document.getElementById("editCatatan").value) || (existingItem ? existingItem.catatan : "-");
-  const tapak = (document.getElementById("editTapak") && document.getElementById("editTapak").value) || (existingItem ? existingItem.tapak : "Tidak Diperlukan");
-  const rekomendasi = (document.getElementById("editRekomendasi") && document.getElementById("editRekomendasi").value) || (existingItem ? existingItem.rekomendasi : "-");
-
-  let perangkat = existingItem ? (existingItem.perangkat || "-") : "-";
-  const checkedBoxes = document.querySelectorAll("input[name='deviceCheck']:checked");
-  if (checkedBoxes && checkedBoxes.length > 0) {
-    const selectedDevices = [];
-    checkedBoxes.forEach(cb => selectedDevices.push(cb.value));
-    perangkat = selectedDevices.join(", ");
-  }
-
   const payload = {
-    action: "updateTower",
+    action: "updateSatwaALAM",
     nama: towerName,
-    ultg: ultg,
-    jalur: jalur,
     binatang1: b1,
     binatang2: b2,
     kategori: kategori,
-    proteksi: proteksi,
-    perangkat: perangkat,
     aktivitas: aktivitas,
-    catatan: catatan,
-    tapak: tapak,
-    rekomendasi: rekomendasi
+    catatan: catatan
   };
 
   try {
-    // Kirim sinkronisasi ke Google Spreadsheet via helper
+    // Kirim sinkronisasi ke Google Apps Script
     await syncToGoogleSpreadsheet(payload);
 
-    // Perbarui data di memori
+    // Perbarui data lokal di memori
     const item = towerData.find(t => t.no === no);
     if (item) {
-      item.nama = towerName;
-      item.ultg = ultg;
-      item.jalur = jalur;
       item.binatang1 = b1;
       item.binatang2 = b2;
       item.kategori = kategori;
-      item.proteksi = proteksi;
-      item.perangkat = perangkat;
       item.aktivitas = aktivitas;
       item.catatan = catatan;
-      item.tapak = tapak;
-      item.rekomendasi = rekomendasi;
-      item.rencanaTindakLanjut = rekomendasi;
+
+      // Update kolomAP mirror jika satwa ada
+      if (kategori !== "(Blanks) / Tidak Ada") {
+        item.kolomAP = kategori;
+      } else {
+        item.kolomAP = "";
+      }
     }
 
     try {
@@ -187,14 +163,376 @@ async function submitTowerUpdate(event) {
     }
 
     applyFilters();
-    closeEditModal();
-    alert(`✅ Sukses! Data "${towerName}" telah dikirim ke Google Sheets TRS_PLM.`);
+    renderTable();
+    if (typeof updateMetrics === "function") updateMetrics(filteredData);
+    closeModalSatwaALAM();
+    alert(`✅ Sukses! Data Satwa Kolom AL & AM untuk "${towerName}" (${kategori}) telah dikirim ke Google Sheets TRS_PLM.`);
   } catch (err) {
     console.error("Sinkronisasi gagal:", err);
-    alert("⚠️ Gagal terhubung ke Google Apps Script: " + err.message);
+    alert("⚠️ Terjadi kendala sinkronisasi: " + err.message);
   } finally {
-    btnSubmit.innerHTML = originalText;
+    btnSubmit.innerHTML = originalHtml;
     btnSubmit.disabled = false;
+  }
+}
+
+
+// =========================================================================
+// 2. MODAL KHUSUS TAB MANAJEMEN ASET (KOLOM E s.d. KOLOM Z)
+// =========================================================================
+
+// Dapatkan tanggal hari ini dalam format MM/DD/YYYY sesuai format Spreadsheet
+function getEZTodayFormatted() {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+// Buka modal manajemen data Kolom E s.d. Z untuk menara tertentu
+function openModalKolomEZ(no) {
+  const item = towerData.find(t => t.no === no);
+  if (!item) return;
+
+  // Isi data header
+  const elNo = document.getElementById("ezTowerNo");
+  if (elNo) elNo.value = item.no;
+
+  const elNamaHidden = document.getElementById("ezTowerNamaHidden");
+  if (elNamaHidden) elNamaHidden.value = item.nama;
+
+  const elName = document.getElementById("ezModalTowerName");
+  if (elName) elName.innerText = item.nama;
+
+  const elJalur = document.getElementById("ezModalJalur");
+  if (elJalur) elJalur.innerText = item.jalur;
+
+  const elUltg = document.getElementById("ezModalUltg");
+  if (elUltg) elUltg.innerText = item.ultg;
+
+  // Helper set field checkbox & tanggal
+  const setField = (chkId, dateId, isChecked, dateVal) => {
+    const chk = document.getElementById(chkId);
+    const dateInput = document.getElementById(dateId);
+    if (chk) chk.checked = Boolean(isChecked);
+    if (dateInput) dateInput.value = dateVal || "";
+  };
+
+  // 1. TOP SKOR (Kolom E, F, G, H)
+  setField("ezTopSkorL1", "ezTopSkorL1Date", item.ezTopSkorL1, item.ezTopSkorL1Date);
+  setField("ezTopSkorL2", "ezTopSkorL2Date", item.ezTopSkorL2, item.ezTopSkorL2Date);
+
+  // 2. IRONMAN (Kolom I, J, K, L)
+  setField("ezIronmanL1", "ezIronmanL1Date", item.ezIronmanL1, item.ezIronmanL1Date);
+  setField("ezIronmanL2", "ezIronmanL2Date", item.ezIronmanL2, item.ezIronmanL2Date);
+
+  // 3. BOLUVES (Kolom M, N)
+  setField("ezBoluves", "ezBoluvesDate", item.ezBoluves, item.ezBoluvesDate);
+
+  // 4. JARING (Kolom O, P)
+  setField("ezJaring", "ezJaringDate", item.ezJaring, item.ezJaringDate);
+
+  // 5. PELAKOR (Kolom Q, R)
+  setField("ezPelakor", "ezPelakorDate", item.ezPelakor, item.ezPelakorDate);
+
+  // 6. KAWAT SILET (Kolom S, T)
+  setField("ezKawatSilet", "ezKawatSiletDate", item.ezKawatSilet, item.ezKawatSiletDate);
+
+  // 7. ASB (Kolom U, V)
+  setField("ezAsb", "ezAsbDate", item.ezAsb, item.ezAsbDate);
+
+  // 8. PEMVES (Kolom W, X)
+  setField("ezPemves", "ezPemvesDate", item.ezPemves, item.ezPemvesDate);
+
+  // 9. TOGAR ABES (Kolom Y, Z)
+  setField("ezTogarAbes", "ezTogarAbesDate", item.ezTogarAbes, item.ezTogarAbesDate);
+
+  // Perbarui preview ringkasan
+  updateEZLivePreview();
+
+  const modal = document.getElementById("modalKolomEZ");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+// Tutup modal Kolom E s.d. Z
+function closeModalKolomEZ() {
+  const modal = document.getElementById("modalKolomEZ");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+}
+
+// Handler saat checkbox perangkat berubah
+function onEZCheckboxChange(chkId, dateId) {
+  const chk = document.getElementById(chkId);
+  const dateInput = document.getElementById(dateId);
+  if (!chk || !dateInput) return;
+
+  if (chk.checked) {
+    if (!dateInput.value.trim()) {
+      dateInput.value = getEZTodayFormatted();
+    }
+  } else {
+    // Jika dicentang batal, kosongkan tanggal
+    dateInput.value = "";
+  }
+  updateEZLivePreview();
+}
+
+// Set tanggal input menjadi hari ini dan centang checkboxnya
+function setEZToday(dateId, chkId) {
+  const dateInput = document.getElementById(dateId);
+  const chk = document.getElementById(chkId);
+  if (dateInput) dateInput.value = getEZTodayFormatted();
+  if (chk) chk.checked = true;
+  updateEZLivePreview();
+}
+
+// Set tanggal hari ini ke seluruh perangkat yang tercentang
+function setAllEZToday() {
+  const today = getEZTodayFormatted();
+  const pairs = [
+    ["ezTopSkorL1", "ezTopSkorL1Date"],
+    ["ezTopSkorL2", "ezTopSkorL2Date"],
+    ["ezIronmanL1", "ezIronmanL1Date"],
+    ["ezIronmanL2", "ezIronmanL2Date"],
+    ["ezBoluves", "ezBoluvesDate"],
+    ["ezJaring", "ezJaringDate"],
+    ["ezPelakor", "ezPelakorDate"],
+    ["ezKawatSilet", "ezKawatSiletDate"],
+    ["ezAsb", "ezAsbDate"],
+    ["ezPemves", "ezPemvesDate"],
+    ["ezTogarAbes", "ezTogarAbesDate"]
+  ];
+
+  pairs.forEach(([chkId, dateId]) => {
+    const chk = document.getElementById(chkId);
+    const dateInput = document.getElementById(dateId);
+    if (chk && dateInput && chk.checked) {
+      dateInput.value = today;
+    }
+  });
+  updateEZLivePreview();
+}
+
+// Reset semua centang dan tanggal Kolom E s.d. Z
+function resetAllEZ() {
+  if (!confirm("Apakah Anda yakin ingin mereset seluruh data Kolom E s.d. Z untuk menara ini?")) return;
+
+  const pairs = [
+    ["ezTopSkorL1", "ezTopSkorL1Date"],
+    ["ezTopSkorL2", "ezTopSkorL2Date"],
+    ["ezIronmanL1", "ezIronmanL1Date"],
+    ["ezIronmanL2", "ezIronmanL2Date"],
+    ["ezBoluves", "ezBoluvesDate"],
+    ["ezJaring", "ezJaringDate"],
+    ["ezPelakor", "ezPelakorDate"],
+    ["ezKawatSilet", "ezKawatSiletDate"],
+    ["ezAsb", "ezAsbDate"],
+    ["ezPemves", "ezPemvesDate"],
+    ["ezTogarAbes", "ezTogarAbesDate"]
+  ];
+
+  pairs.forEach(([chkId, dateId]) => {
+    const chk = document.getElementById(chkId);
+    const dateInput = document.getElementById(dateId);
+    if (chk) chk.checked = false;
+    if (dateInput) dateInput.value = "";
+  });
+  updateEZLivePreview();
+}
+
+// Perbarui badge counter & ringkasan hasil secara live
+function updateEZLivePreview() {
+  const getChecked = id => {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
+  };
+
+  const activeNames = [];
+  let totalChecked = 0;
+
+  if (getChecked("ezTopSkorL1") || getChecked("ezTopSkorL2")) {
+    activeNames.push("TOP SKOR");
+    if (getChecked("ezTopSkorL1")) totalChecked++;
+    if (getChecked("ezTopSkorL2")) totalChecked++;
+  }
+  if (getChecked("ezIronmanL1") || getChecked("ezIronmanL2")) {
+    activeNames.push("IRONMAN");
+    if (getChecked("ezIronmanL1")) totalChecked++;
+    if (getChecked("ezIronmanL2")) totalChecked++;
+  }
+  if (getChecked("ezBoluves")) { activeNames.push("BOLUVES"); totalChecked++; }
+  if (getChecked("ezJaring")) { activeNames.push("JARING"); totalChecked++; }
+  if (getChecked("ezPelakor")) { activeNames.push("PELAKOR"); totalChecked++; }
+  if (getChecked("ezKawatSilet")) { activeNames.push("KAWAT SILET"); totalChecked++; }
+  if (getChecked("ezAsb")) { activeNames.push("ASB"); totalChecked++; }
+  if (getChecked("ezPemves")) { activeNames.push("PEMVES"); totalChecked++; }
+  if (getChecked("ezTogarAbes")) { activeNames.push("TOGAR ABES"); totalChecked++; }
+
+  // Update counter pill
+  const elCounter = document.getElementById("ezCounterBadge");
+  if (elCounter) {
+    elCounter.innerText = `${totalChecked} Item Terpasang (${activeNames.length} Jenis)`;
+    if (totalChecked > 0) {
+      elCounter.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
+    } else {
+      elCounter.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700";
+    }
+  }
+
+  // Update proteksi badge
+  const elProt = document.getElementById("ezProteksiBadge");
+  if (elProt) {
+    if (activeNames.length > 0) {
+      elProt.innerText = "TERPASANG";
+      elProt.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white";
+    } else {
+      elProt.innerText = "BELUM TERPASANG";
+      elProt.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300";
+    }
+  }
+
+  // Update preview Kolom AJ
+  const elPreviewAJ = document.getElementById("ezPreviewKolomAJ");
+  if (elPreviewAJ) {
+    elPreviewAJ.innerText = activeNames.length > 0 ? activeNames.join(", ") : "TIDAK TERPASANG";
+  }
+}
+
+// Simpan pembaruan Kolom E s.d. Z ke Spreadsheet
+async function submitKolomEZUpdate(event) {
+  event.preventDefault();
+
+  const btnSubmit = document.getElementById("btnSubmitKolomEZ");
+  const originalHtml = btnSubmit.innerHTML;
+  btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Menyimpan ke Kolom E–Z Spreadsheet...`;
+  btnSubmit.disabled = true;
+
+  const no = parseInt(document.getElementById("ezTowerNo").value, 10);
+  const towerName = document.getElementById("ezTowerNamaHidden").value;
+
+  const getChk = id => {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
+  };
+  const getVal = id => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  };
+
+  const payload = {
+    action: "updateKolomEZ",
+    hasKolomEZ: true,
+    nama: towerName,
+    // 22 Kolom (E sampai Z)
+    topSkorL1: getChk("ezTopSkorL1"),
+    topSkorL1Date: getVal("ezTopSkorL1Date"),
+    topSkorL2: getChk("ezTopSkorL2"),
+    topSkorL2Date: getVal("ezTopSkorL2Date"),
+    ironmanL1: getChk("ezIronmanL1"),
+    ironmanL1Date: getVal("ezIronmanL1Date"),
+    ironmanL2: getChk("ezIronmanL2"),
+    ironmanL2Date: getVal("ezIronmanL2Date"),
+    ezBoluves: getChk("ezBoluves"),
+    boluvesDate: getVal("ezBoluvesDate"),
+    ezJaring: getChk("ezJaring"),
+    jaringDate: getVal("ezJaringDate"),
+    ezPelakor: getChk("ezPelakor"),
+    pelakorDate: getVal("ezPelakorDate"),
+    ezKawatSilet: getChk("ezKawatSilet"),
+    kawatSiletDate: getVal("ezKawatSiletDate"),
+    ezAsb: getChk("ezAsb"),
+    asbDate: getVal("ezAsbDate"),
+    ezPemves: getChk("ezPemves"),
+    pemvesDate: getVal("ezPemvesDate"),
+    ezTogarAbes: getChk("ezTogarAbes"),
+    togarAbesDate: getVal("ezTogarAbesDate")
+  };
+
+  try {
+    // Sinkronisasi realtime ke Google Sheets
+    await syncToGoogleSpreadsheet(payload);
+
+    // Perbarui data lokal di memori
+    const item = towerData.find(t => t.no === no);
+    if (item) {
+      item.ezTopSkorL1 = payload.topSkorL1;
+      item.ezTopSkorL1Date = payload.topSkorL1Date;
+      item.ezTopSkorL2 = payload.topSkorL2;
+      item.ezTopSkorL2Date = payload.topSkorL2Date;
+      item.ezIronmanL1 = payload.ironmanL1;
+      item.ezIronmanL1Date = payload.ironmanL1Date;
+      item.ezIronmanL2 = payload.ironmanL2;
+      item.ezIronmanL2Date = payload.ironmanL2Date;
+      item.ezBoluves = payload.ezBoluves;
+      item.ezBoluvesDate = payload.boluvesDate;
+      item.ezJaring = payload.ezJaring;
+      item.ezJaringDate = payload.jaringDate;
+      item.ezPelakor = payload.ezPelakor;
+      item.ezPelakorDate = payload.pelakorDate;
+      item.ezKawatSilet = payload.ezKawatSilet;
+      item.ezKawatSiletDate = payload.kawatSiletDate;
+      item.ezAsb = payload.ezAsb;
+      item.ezAsbDate = payload.asbDate;
+      item.ezPemves = payload.ezPemves;
+      item.ezPemvesDate = payload.pemvesDate;
+      item.ezTogarAbes = payload.ezTogarAbes;
+      item.ezTogarAbesDate = payload.togarAbesDate;
+
+      // Hitung ulang Kolom AJ dan Status Proteksi
+      const activeDevices = [];
+      if (item.ezTopSkorL1 || item.ezTopSkorL2) activeDevices.push("TOP SKOR");
+      if (item.ezIronmanL1 || item.ezIronmanL2) activeDevices.push("IRONMAN");
+      if (item.ezBoluves) activeDevices.push("BOLUVES");
+      if (item.ezJaring) activeDevices.push("JARING");
+      if (item.ezPelakor) activeDevices.push("PELAKOR");
+      if (item.ezKawatSilet) activeDevices.push("KAWAT SILET");
+      if (item.ezAsb) activeDevices.push("ASB");
+      if (item.ezPemves) activeDevices.push("PEMVES");
+      if (item.ezTogarAbes) activeDevices.push("TOGAR ABES");
+
+      if (activeDevices.length > 0) {
+        item.proteksi = "TERPASANG";
+        item.perangkat = activeDevices.join(", ");
+      } else {
+        item.proteksi = "BELUM TERPASANG";
+        item.perangkat = "-";
+      }
+    }
+
+    try {
+      localStorage.setItem("trs_plm_tower_data_v3", JSON.stringify(towerData));
+    } catch (e) {
+      console.warn("Gagal simpan ke cache:", e);
+    }
+
+    applyFilters();
+    renderTable();
+    closeModalKolomEZ();
+    alert(`✅ Sukses! Data Kolom E s.d. Z untuk "${towerName}" telah dikirim dan disinkronkan ke Google Sheets TRS_PLM.`);
+  } catch (err) {
+    console.error("Sinkronisasi gagal:", err);
+    alert("⚠️ Terjadi kendala sinkronisasi: " + err.message);
+  } finally {
+    btnSubmit.innerHTML = originalHtml;
+    btnSubmit.disabled = false;
+  }
+}
+
+// Router cerdas: memanggil modal yang sesuai dengan tab aktif saat ini
+function openEditModal(no) {
+  if (typeof currentActiveTab !== "undefined" && currentActiveTab === "satwa") {
+    openModalSatwaALAM(no);
+  } else {
+    openModalKolomEZ(no);
   }
 }
 
@@ -203,7 +541,7 @@ function openAddNewModal() {
   const newName = prompt("Masukkan Nama Tower Baru (misal: TOWER SUTT 150kV KRSAN - NRING #0023):");
   if (!newName) return;
   const currentUltg = (document.getElementById("filterUltg") && document.getElementById("filterUltg").value) || "ULTG BETUNG";
-  const availableJalurs = getJalursForUltg(currentUltg);
+  const availableJalurs = typeof getJalursForUltg === "function" ? getJalursForUltg(currentUltg) : [];
   const defaultJalur = availableJalurs[0] || "TRS 150kV TLKLP - BTUNG";
 
   const newTower = {
@@ -211,6 +549,8 @@ function openAddNewModal() {
     nama: newName,
     jalur: defaultJalur,
     ultg: currentUltg,
+    binatang1: "",
+    binatang2: "",
     kategori: "(Blanks) / Tidak Ada",
     proteksi: "BELUM TERPASANG",
     perangkat: "-",

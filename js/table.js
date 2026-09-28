@@ -36,29 +36,139 @@ function renderTable() {
     return;
   }
 
-  pageSlice.forEach((item, index) => {
-    // Badge Tampilan Nama Hewan (Statis tanpa dropdown)
-    let hewanBadge = `<span class="text-slate-400 font-normal">-</span>`;
-    if (item.kategori && item.kategori !== "(Blanks) / Tidak Ada" && item.kategori !== "-") {
-      if (item.kategori === "BURUNG") {
-        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>BURUNG</span>`;
-      } else if (item.kategori === "KERA") {
-        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>KERA</span>`;
-      } else if (item.kategori === "ULAR") {
-        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>ULAR</span>`;
-      } else {
-        hewanBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>${item.kategori}</span>`;
+  // Update judul tabel dan badge fokus sesuai tab aktif
+  const elTableTitle = document.getElementById("tableMainTitle");
+  const elTableBadge = document.getElementById("tableFocusBadge");
+  const isSatwaTab = typeof currentActiveTab !== "undefined" && currentActiveTab === "satwa";
+
+  if (elTableTitle) {
+    if (isSatwaTab) {
+      elTableTitle.innerText = "Monitoring & Input Kerawanan Satwa (Kolom AL & AM)";
+      if (elTableBadge) {
+        elTableBadge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200";
+        elTableBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Fokus: Kerawanan Satwa (Kolom AL & AM)`;
+      }
+    } else {
+      elTableTitle.innerText = "Manajemen Asset Tower & Status Proteksi (Kolom E s.d. Z)";
+      if (elTableBadge) {
+        elTableBadge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200";
+        elTableBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Fokus: Pemasangan Proteksi (Kolom E s.d. Z)`;
       }
     }
+  }
 
-    const protBadge = item.proteksi === "TERPASANG" 
-      ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Terpasang</span>`
-      : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Belum Terpasang</span>`;
+  pageSlice.forEach((item, index) => {
+    // 1. Render Tampilan Nama Hewan (Kolom AL & AM)
+    let hewanBadge = `<span class="text-slate-400 font-normal">-</span>`;
+    const hasHewan = item.kategori && item.kategori !== "(Blanks) / Tidak Ada" && item.kategori !== "-";
+
+    if (hasHewan) {
+      let badgeStyle = "bg-purple-50 text-purple-700 border-purple-200 dot-purple-500";
+      if (item.kategori === "BURUNG") badgeStyle = "bg-sky-50 text-sky-700 border-sky-200 dot-sky-500";
+      else if (item.kategori === "KERA") badgeStyle = "bg-amber-50 text-amber-700 border-amber-200 dot-amber-500";
+      else if (item.kategori === "ULAR") badgeStyle = "bg-rose-50 text-rose-700 border-rose-200 dot-rose-500";
+
+      const dotBg = badgeStyle.split("dot-")[1] || "sky-500";
+      const cleanClass = badgeStyle.split(" dot-")[0];
+
+      if (isSatwaTab) {
+        hewanBadge = `
+          <button onclick="openModalSatwaALAM(${item.no})" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cleanClass} border hover:opacity-80 transition cursor-pointer" title="Klik untuk edit data Satwa Kolom AL & AM">
+            <span class="w-1.5 h-1.5 rounded-full bg-${dotBg}"></span>${item.kategori}
+          </button>
+        `;
+      } else {
+        hewanBadge = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cleanClass} border">
+            <span class="w-1.5 h-1.5 rounded-full bg-${dotBg}"></span>${item.kategori}
+          </span>
+        `;
+      }
+    } else if (isSatwaTab) {
+      hewanBadge = `
+        <button onclick="openModalSatwaALAM(${item.no})" class="group inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-sky-700 transition" title="Input Satwa Kolom AL & AM">
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-slate-300 group-hover:text-sky-600"></i>
+          <span class="group-hover:underline italic">+ Isi Satwa (AL/AM)</span>
+        </button>
+      `;
+    }
 
     const isSesuai = item.aktivitas === "Sesuai";
     const actText = isSesuai
       ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Sesuai</span>`
       : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Tidak Sesuai</span>`;
+
+    // 2. Render Kolom E s.d. Z (Perangkat Terpasang Eksisting & Tanggal Pasang)
+    const ezInstalled = typeof getInstalledDevicesFromEZ === "function" ? getInstalledDevicesFromEZ(item) : [];
+    let perangkatHtml = "";
+
+    if (ezInstalled.length > 0) {
+      if (!isSatwaTab) {
+        // Mode Tab Manajemen Asset: tombol interaktif buka Kolom E-Z
+        perangkatHtml = `
+          <button onclick="openModalKolomEZ(${item.no})" class="text-left group flex flex-col gap-1 cursor-pointer" title="Klik untuk edit data Kolom E s.d. Z">
+            <div class="flex items-center gap-1 flex-wrap">
+              ${ezInstalled.slice(0, 3).map(d => `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 group-hover:border-emerald-400 transition" title="Terpasang: ${d.name} (${d.col}) ${d.date ? 'pada ' + d.date : ''}">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${d.name}
+                </span>
+              `).join("")}
+              ${ezInstalled.length > 3 ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">+${ezInstalled.length - 3}</span>` : ""}
+            </div>
+            ${ezInstalled[0] && ezInstalled[0].date ? `<div class="text-[10px] text-slate-400 group-hover:text-emerald-700 transition">Tgl: ${ezInstalled[0].date}</div>` : ""}
+          </button>
+        `;
+      } else {
+        // Mode Tab Satwa: tampilan informatif
+        perangkatHtml = `
+          <div class="flex items-center gap-1 flex-wrap">
+            ${ezInstalled.slice(0, 2).map(d => `
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                ${d.name}
+              </span>
+            `).join("")}
+            ${ezInstalled.length > 2 ? `<span class="text-[10px] text-slate-400 font-bold">+${ezInstalled.length - 2}</span>` : ""}
+          </div>
+        `;
+      }
+    } else if (item.perangkat && item.perangkat !== "-" && item.perangkat !== "TIDAK TERPASANG") {
+      if (!isSatwaTab) {
+        perangkatHtml = `
+          <button onclick="openModalKolomEZ(${item.no})" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer" title="Klik untuk atur tanggal di Kolom E-Z">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${item.perangkat}
+          </button>
+        `;
+      } else {
+        perangkatHtml = `<span class="text-slate-600 text-xs font-medium">${item.perangkat}</span>`;
+      }
+    } else {
+      if (!isSatwaTab) {
+        perangkatHtml = `
+          <button onclick="openModalKolomEZ(${item.no})" class="group inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-emerald-700 transition" title="Isi status & tanggal pemasangan Kolom E s.d. Z">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-600"></i>
+            <span class="group-hover:underline italic">+ Isi Kolom E–Z</span>
+          </button>
+        `;
+      } else {
+        perangkatHtml = `<span class="text-slate-400 font-normal">-</span>`;
+      }
+    }
+
+    // 3. Tombol Aksi spesifik per Tab
+    let primaryActionBtn = "";
+    if (isSatwaTab) {
+      primaryActionBtn = `
+        <button onclick="openModalSatwaALAM(${item.no})" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-600 transition" title="Kerawanan Satwa: Isi Binatang 1 & 2 (Kolom AL & AM)">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+    } else {
+      primaryActionBtn = `
+        <button onclick="openModalKolomEZ(${item.no})" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition" title="Manajemen Aset: Isi Kolom E s.d. Z (Pemasangan Anti-Binatang & Tanggal)">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+    }
 
     const row = document.createElement("tr");
     row.className = "hover:bg-slate-50/80 transition-colors";
@@ -72,12 +182,7 @@ function renderTable() {
         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">${item.ultg}</span>
       </td>
       <td class="py-3 px-3.5">${hewanBadge}</td>
-      <td class="py-3 px-3.5">
-        ${item.perangkat && item.perangkat !== "-" && item.perangkat !== "TIDAK TERPASANG"
-          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${item.perangkat}</span>`
-          : `<span class="text-slate-400 font-normal">-</span>`
-        }
-      </td>
+      <td class="py-3 px-3.5">${perangkatHtml}</td>
       <td class="py-3 px-3.5 text-[11px]">${actText}</td>
       <td class="py-3 px-3.5 text-[11px]">
         <button onclick="openModalTindakLanjut(${item.no})" class="text-left group flex items-center gap-1 hover:text-sky-800 transition" title="Klik untuk edit rencana tindak lanjut (Kolom AR-BA)">
@@ -89,7 +194,7 @@ function renderTable() {
       </td>
       <td class="py-3 px-3.5 text-center">
         <div class="flex items-center justify-center gap-1">
-          <button onclick="openEditModal(${item.no})" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-600 transition" title="Edit Data Tower & Satwa"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+          ${primaryActionBtn}
           <button onclick="openModalTindakLanjut(${item.no})" class="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 transition" title="Isi Rencana Tindak Lanjut (Kolom AR-BA)"><i data-lucide="sliders" class="w-3.5 h-3.5"></i></button>
           <button onclick="deleteRow(${item.no})" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-600 transition" title="Hapus"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
         </div>

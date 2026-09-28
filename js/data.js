@@ -61,10 +61,73 @@ function initDataset() {
     t.ironMan = Boolean(t.ironMan);
     t.kawatSilet = Boolean(t.kawatSilet);
     t.asb = Boolean(t.asb);
-    t.togarAbes = Boolean(t.togarAbes);
+    // Normalisasi Kolom E s.d. Z (Pemasangan Anti-Binatang & Tanggal)
+    t.ezTopSkorL1 = Boolean(t.ezTopSkorL1);
+    t.ezTopSkorL1Date = t.ezTopSkorL1Date || "";
+    t.ezTopSkorL2 = Boolean(t.ezTopSkorL2);
+    t.ezTopSkorL2Date = t.ezTopSkorL2Date || "";
+    t.ezIronmanL1 = Boolean(t.ezIronmanL1);
+    t.ezIronmanL1Date = t.ezIronmanL1Date || "";
+    t.ezIronmanL2 = Boolean(t.ezIronmanL2);
+    t.ezIronmanL2Date = t.ezIronmanL2Date || "";
+    t.ezBoluves = Boolean(t.ezBoluves);
+    t.ezBoluvesDate = t.ezBoluvesDate || "";
+    t.ezJaring = Boolean(t.ezJaring);
+    t.ezJaringDate = t.ezJaringDate || "";
+    t.ezPelakor = Boolean(t.ezPelakor);
+    t.ezPelakorDate = t.ezPelakorDate || "";
+    t.ezKawatSilet = Boolean(t.ezKawatSilet);
+    t.ezKawatSiletDate = t.ezKawatSiletDate || "";
+    t.ezAsb = Boolean(t.ezAsb);
+    t.ezAsbDate = t.ezAsbDate || "";
+    t.ezPemves = Boolean(t.ezPemves);
+    t.ezPemvesDate = t.ezPemvesDate || "";
+    t.ezTogarAbes = Boolean(t.ezTogarAbes);
+    t.ezTogarAbesDate = t.ezTogarAbesDate || "";
+
+    // Sinkronkan status proteksi jika ada perangkat terpasang di Kolom E s.d. Z
+    const hasAnyEZ = t.ezTopSkorL1 || t.ezTopSkorL2 || t.ezIronmanL1 || t.ezIronmanL2 || 
+                     t.ezBoluves || t.ezJaring || t.ezPelakor || t.ezKawatSilet || 
+                     t.ezAsb || t.ezPemves || t.ezTogarAbes;
+    if (hasAnyEZ) {
+      t.proteksi = "TERPASANG";
+      if (!t.perangkat || t.perangkat === "-" || t.perangkat === "TIDAK TERPASANG") {
+        const ezNames = [];
+        if (t.ezTopSkorL1 || t.ezTopSkorL2) ezNames.push("TOP SKOR");
+        if (t.ezIronmanL1 || t.ezIronmanL2) ezNames.push("IRONMAN");
+        if (t.ezBoluves) ezNames.push("BOLUVES");
+        if (t.ezJaring) ezNames.push("JARING");
+        if (t.ezPelakor) ezNames.push("PELAKOR");
+        if (t.ezKawatSilet) ezNames.push("KAWAT SILET");
+        if (t.ezAsb) ezNames.push("ASB");
+        if (t.ezPemves) ezNames.push("PEMVES");
+        if (t.ezTogarAbes) ezNames.push("TOGAR ABES");
+        t.perangkat = ezNames.join(", ");
+      }
+    }
   });
 
   filteredData = [...towerData];
+}
+
+/**
+ * Dapatkan daftar perangkat anti-binatang yang terpasang dari Kolom E s.d. Z
+ */
+function getInstalledDevicesFromEZ(item) {
+  if (!item) return [];
+  const list = [];
+  if (item.ezTopSkorL1) list.push({ name: "TOP SKOR L1", device: "TOP SKOR", line: "Line 1", col: "E", dateCol: "F", date: item.ezTopSkorL1Date });
+  if (item.ezTopSkorL2) list.push({ name: "TOP SKOR L2", device: "TOP SKOR", line: "Line 2", col: "G", dateCol: "H", date: item.ezTopSkorL2Date });
+  if (item.ezIronmanL1) list.push({ name: "IRONMAN L1", device: "IRONMAN", line: "Line 1", col: "I", dateCol: "J", date: item.ezIronmanL1Date });
+  if (item.ezIronmanL2) list.push({ name: "IRONMAN L2", device: "IRONMAN", line: "Line 2", col: "K", dateCol: "L", date: item.ezIronmanL2Date });
+  if (item.ezBoluves) list.push({ name: "BOLUVES", device: "BOLUVES", col: "M", dateCol: "N", date: item.ezBoluvesDate });
+  if (item.ezJaring) list.push({ name: "JARING", device: "JARING", col: "O", dateCol: "P", date: item.ezJaringDate });
+  if (item.ezPelakor) list.push({ name: "PELAKOR", device: "PELAKOR", col: "Q", dateCol: "R", date: item.ezPelakorDate });
+  if (item.ezKawatSilet) list.push({ name: "KAWAT SILET", device: "KAWAT SILET", col: "S", dateCol: "T", date: item.ezKawatSiletDate });
+  if (item.ezAsb) list.push({ name: "ASB", device: "ASB", col: "U", dateCol: "V", date: item.ezAsbDate });
+  if (item.ezPemves) list.push({ name: "PEMVES", device: "PEMVES", col: "W", dateCol: "X", date: item.ezPemvesDate });
+  if (item.ezTogarAbes) list.push({ name: "TOGAR ABES", device: "TOGAR ABES", col: "Y", dateCol: "Z", date: item.ezTogarAbesDate });
+  return list;
 }
 
 /**
