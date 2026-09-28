@@ -165,59 +165,7 @@ function renderTindakLanjutComponent() {
         </div>
       </div>
 
-      <!-- 3. FILTER & WORKSPACE CONTROLS -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          
-          <!-- SEARCH & DROPDOWNS -->
-          <div class="flex items-center gap-2.5 flex-1 flex-wrap">
-            <div class="relative min-w-[220px] flex-1">
-              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-              <input type="text" id="tindakLanjutSearchInput" oninput="onTindakLanjutSearchChange(this.value)" placeholder="Cari Nama Tower / Jalur..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500">
-            </div>
-
-            <!-- FILTER ULTG -->
-            <select id="tindakLanjutFilterUltg" onchange="onTindakLanjutUltgChange(this.value)" class="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:ring-1 focus:ring-sky-500">
-              <option value="">Semua ULTG</option>
-              <option value="ULTG BETUNG">ULTG BETUNG</option>
-              <option value="ULTG KERAMASAN">ULTG KERAMASAN</option>
-              <option value="ULTG BOOM BARU">ULTG BOOM BARU</option>
-              <option value="ULTG BORANG">ULTG BORANG</option>
-              <option value="ULTG BANGKA">ULTG BANGKA</option>
-              <option value="ULTG BELITUNG">ULTG BELITUNG</option>
-            </select>
-
-            <!-- FILTER SATWA (KOLOM AP) -->
-            <select id="tindakLanjutFilterSatwa" onchange="onTindakLanjutSatwaChange(this.value)" class="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:ring-1 focus:ring-sky-500">
-              <option value="">Semua Satwa</option>
-              <option value="KERA">KERA</option>
-              <option value="ULAR">ULAR</option>
-              <option value="BURUNG">BURUNG</option>
-            </select>
-
-            <!-- FILTER STATUS RENCANA -->
-            <select id="tindakLanjutFilterStatus" onchange="onTindakLanjutStatusChange(this.value)" class="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:ring-1 focus:ring-sky-500">
-              <option value="">Semua Status</option>
-              <option value="belum">Belum Ada Rencana</option>
-              <option value="sudah">Sudah Ada Rencana</option>
-            </select>
-          </div>
-
-          <!-- TOGGLE SCOPE: KHUSUS KOLOM AP vs SEMUA MENARA -->
-          <div class="flex items-center gap-2 shrink-0">
-            <button id="btnScopeOnlyAP" onclick="toggleTindakLanjutScope(true)" class="px-3 py-1.5 text-xs font-bold rounded-lg border transition ${tindakLanjutScopeOnlyAP ? 'bg-sky-600 text-white border-sky-600 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-              <i data-lucide="filter" class="w-3.5 h-3.5 inline mr-1"></i>
-              Khusus Kolom AP (108)
-            </button>
-            <button id="btnScopeAllTowers" onclick="toggleTindakLanjutScope(false)" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition ${!tindakLanjutScopeOnlyAP ? 'bg-sky-600 text-white border-sky-600 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-              Semua Menara (3.201)
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- 4. TABEL RENCANA TINDAK LANJUT (KOLOM AR - BA) -->
+      <!-- 3. TABEL RENCANA TINDAK LANJUT (KOLOM AR - BA) -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -703,15 +651,35 @@ function toggleTindakLanjutScope(onlyAP) {
   const btnAll = document.getElementById("btnScopeAllTowers");
   if (btnAP && btnAll) {
     if (onlyAP) {
-      btnAP.className = "px-3 py-1.5 text-xs font-bold rounded-lg border transition bg-sky-600 text-white border-sky-600 shadow-sm";
-      btnAll.className = "px-3 py-1.5 text-xs font-medium rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100";
+      btnAP.className = "px-2.5 py-1.5 text-xs font-bold rounded-lg border transition bg-sky-600 text-white border-sky-600 shadow-sm";
+      btnAll.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100";
     } else {
-      btnAP.className = "px-3 py-1.5 text-xs font-medium rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100";
-      btnAll.className = "px-3 py-1.5 text-xs font-bold rounded-lg border transition bg-sky-600 text-white border-sky-600 shadow-sm";
+      btnAP.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100";
+      btnAll.className = "px-2.5 py-1.5 text-xs font-bold rounded-lg border transition bg-sky-600 text-white border-sky-600 shadow-sm";
     }
   }
 
   updateTindakLanjutView();
+}
+
+function resetTindakLanjutFilters() {
+  tindakLanjutSearch = "";
+  tindakLanjutUltgFilter = "";
+  tindakLanjutSatwaFilter = "";
+  tindakLanjutStatusFilter = "";
+  tindakLanjutPage = 1;
+
+  const elSearch = document.getElementById("tindakLanjutSearchInput");
+  const elUltg = document.getElementById("tindakLanjutFilterUltg");
+  const elSatwa = document.getElementById("tindakLanjutFilterSatwa");
+  const elStatus = document.getElementById("tindakLanjutFilterStatus");
+
+  if (elSearch) elSearch.value = "";
+  if (elUltg) elUltg.value = "";
+  if (elSatwa) elSatwa.value = "";
+  if (elStatus) elStatus.value = "";
+
+  toggleTindakLanjutScope(true);
 }
 
 function changeTindakLanjutPageSize(size) {

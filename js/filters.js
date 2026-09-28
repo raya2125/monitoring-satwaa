@@ -1,5 +1,10 @@
 /**
- * LOGIKA FILTER DINAMIS & CASCADING ULTG-SUTT
+ * LOGIKA FILTER DINAMIS & CASCADING ULTG-SUTT PER TAB
+ * Mendukung filter spesifik untuk:
+ * - Tab 1: Ringkasan & Analitik
+ * - Tab 2: Manajemen Asset Tower (Kolom E s.d. Z)
+ * - Tab 3: Kerawanan Satwa (Kolom AL & AM)
+ * - Tab 4: Rencana Tindak Lanjut (Kolom AR s.d. BA)
  */
 
 // Mengambil daftar jalur SUTT sesuai ULTG
@@ -19,8 +24,12 @@ function getJalursForUltg(selectedUltg) {
   return Array.from(jalurs).sort();
 }
 
-// State combobox SUTT
-let suttActiveIndex = -1;
+// State combobox SUTT per tab
+const suttActiveIndexMap = {
+  analitik: -1,
+  manajemen: -1,
+  satwa: -1
+};
 
 // Helper untuk highlight teks yang cocok
 function highlightMatch(text, query) {
@@ -31,13 +40,13 @@ function highlightMatch(text, query) {
 }
 
 // Render opsi-opsi pada dropdown SUTT
-function renderSuttDropdown(query = "") {
-  const optionsList = document.getElementById("suttOptionsList");
+function renderSuttDropdown(tabKey = "analitik", query = "") {
+  const optionsList = document.getElementById(`suttOptionsList_${tabKey}`);
   if (!optionsList) return;
 
-  const ultgSelect = document.getElementById("filterUltg");
+  const ultgSelect = document.getElementById(`filterUltg_${tabKey}`);
   const selectedUltg = ultgSelect ? ultgSelect.value : "";
-  const currentVal = (document.getElementById("filterSutt") && document.getElementById("filterSutt").value) || "";
+  const currentVal = (document.getElementById(`filterSutt_${tabKey}`) && document.getElementById(`filterSutt_${tabKey}`).value) || "";
   const availableJalurs = getJalursForUltg(selectedUltg);
 
   const cleanQuery = query.toLowerCase().trim();
@@ -53,7 +62,7 @@ function renderSuttDropdown(query = "") {
   // Opsi Reset / Semua Jalur
   const isAllSelected = !currentVal;
   html += `
-    <div onclick="selectSuttOption('')" 
+    <div onclick="selectSuttOption('${tabKey}', '')" 
          class="px-2.5 py-1.5 rounded-lg flex items-center justify-between cursor-pointer transition ${isAllSelected ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}"
          data-index="0"
          data-value="">
@@ -69,7 +78,7 @@ function renderSuttDropdown(query = "") {
     html += `
       <div class="p-3 text-center text-slate-400 text-xs">
         <p>Tidak ada jalur yang cocok dengan "<span class="font-semibold text-slate-600">${query}</span>"</p>
-        <button type="button" onclick="clearSuttSearch(event)" class="mt-1.5 px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded font-medium transition">
+        <button type="button" onclick="clearSuttSearch('${tabKey}', event)" class="mt-1.5 px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded font-medium transition">
           Reset Pencarian
         </button>
       </div>
@@ -82,7 +91,7 @@ function renderSuttDropdown(query = "") {
       const highlightedName = highlightMatch(jalur, cleanQuery);
 
       html += `
-        <div onclick="selectSuttOption('${jalur.replace(/'/g, "\\'")}')" 
+        <div onclick="selectSuttOption('${tabKey}', '${jalur.replace(/'/g, "\\'")}')" 
              class="sutt-option-item px-2.5 py-1.5 rounded-lg flex items-center justify-between cursor-pointer transition ${isSelected ? 'bg-sky-50 text-sky-700 font-bold border border-sky-100' : 'text-slate-700 hover:bg-slate-50'}"
              data-index="${idx + 1}"
              data-value="${jalur.replace(/"/g, '&quot;')}">
@@ -100,31 +109,33 @@ function renderSuttDropdown(query = "") {
   }
 
   optionsList.innerHTML = html;
-  if (typeof lucide !== "undefined") lucide.createIcons();
+  if (typeof lucide !== "undefined" && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
+  }
 }
 
 // Buka dropdown SUTT
-function openSuttDropdown() {
-  const menu = document.getElementById("suttDropdownMenu");
-  const chevron = document.getElementById("suttChevron");
-  const searchInput = document.getElementById("suttSearchInput");
+function openSuttDropdown(tabKey = "analitik") {
+  const menu = document.getElementById(`suttDropdownMenu_${tabKey}`);
+  const chevron = document.getElementById(`suttChevron_${tabKey}`);
+  const searchInput = document.getElementById(`suttSearchInput_${tabKey}`);
   if (!menu) return;
 
   menu.classList.remove("hidden");
   if (chevron) chevron.classList.add("rotate-180");
   
   const query = searchInput ? searchInput.value : "";
-  const currentVal = (document.getElementById("filterSutt") && document.getElementById("filterSutt").value) || "";
-  renderSuttDropdown(query === currentVal ? "" : query);
-  suttActiveIndex = -1;
+  const currentVal = (document.getElementById(`filterSutt_${tabKey}`) && document.getElementById(`filterSutt_${tabKey}`).value) || "";
+  renderSuttDropdown(tabKey, query === currentVal ? "" : query);
+  suttActiveIndexMap[tabKey] = -1;
 }
 
 // Tutup dropdown SUTT
-function closeSuttDropdown() {
-  const menu = document.getElementById("suttDropdownMenu");
-  const chevron = document.getElementById("suttChevron");
-  const searchInput = document.getElementById("suttSearchInput");
-  const hiddenInput = document.getElementById("filterSutt");
+function closeSuttDropdown(tabKey = "analitik") {
+  const menu = document.getElementById(`suttDropdownMenu_${tabKey}`);
+  const chevron = document.getElementById(`suttChevron_${tabKey}`);
+  const searchInput = document.getElementById(`suttSearchInput_${tabKey}`);
+  const hiddenInput = document.getElementById(`filterSutt_${tabKey}`);
 
   if (!menu) return;
   menu.classList.add("hidden");
@@ -140,24 +151,24 @@ function closeSuttDropdown() {
 }
 
 // Toggle buka/tutup dropdown SUTT
-function toggleSuttDropdown(e) {
+function toggleSuttDropdown(tabKey = "analitik", e) {
   if (e) e.stopPropagation();
-  const menu = document.getElementById("suttDropdownMenu");
-  const searchInput = document.getElementById("suttSearchInput");
+  const menu = document.getElementById(`suttDropdownMenu_${tabKey}`);
+  const searchInput = document.getElementById(`suttSearchInput_${tabKey}`);
 
   if (menu && !menu.classList.contains("hidden")) {
-    closeSuttDropdown();
+    closeSuttDropdown(tabKey);
   } else {
     if (searchInput) searchInput.focus();
-    openSuttDropdown();
+    openSuttDropdown(tabKey);
   }
 }
 
 // Pilih opsi SUTT dari dropdown
-function selectSuttOption(jalur) {
-  const hiddenInput = document.getElementById("filterSutt");
-  const searchInput = document.getElementById("suttSearchInput");
-  const clearBtn = document.getElementById("suttClearBtn");
+function selectSuttOption(tabKey = "analitik", jalur) {
+  const hiddenInput = document.getElementById(`filterSutt_${tabKey}`);
+  const searchInput = document.getElementById(`suttSearchInput_${tabKey}`);
+  const clearBtn = document.getElementById(`suttClearBtn_${tabKey}`);
 
   if (hiddenInput) hiddenInput.value = jalur;
   if (searchInput) searchInput.value = jalur;
@@ -167,16 +178,16 @@ function selectSuttOption(jalur) {
     else clearBtn.classList.add("hidden");
   }
 
-  closeSuttDropdown();
-  onSuttChange();
+  closeSuttDropdown(tabKey);
+  onSuttChange(tabKey);
 }
 
 // Hapus pilihan / reset SUTT
-function clearSuttSearch(e) {
+function clearSuttSearch(tabKey = "analitik", e) {
   if (e) e.stopPropagation();
-  const hiddenInput = document.getElementById("filterSutt");
-  const searchInput = document.getElementById("suttSearchInput");
-  const clearBtn = document.getElementById("suttClearBtn");
+  const hiddenInput = document.getElementById(`filterSutt_${tabKey}`);
+  const searchInput = document.getElementById(`suttSearchInput_${tabKey}`);
+  const clearBtn = document.getElementById(`suttClearBtn_${tabKey}`);
 
   if (hiddenInput) hiddenInput.value = "";
   if (searchInput) {
@@ -185,18 +196,18 @@ function clearSuttSearch(e) {
   }
   if (clearBtn) clearBtn.classList.add("hidden");
 
-  renderSuttDropdown("");
-  onSuttChange();
+  renderSuttDropdown(tabKey, "");
+  onSuttChange(tabKey);
 }
 
 // Handle ketikan user di input SUTT (Ketik langsung untuk mencari jalur)
-function handleSuttInput(query) {
-  const menu = document.getElementById("suttDropdownMenu");
-  const clearBtn = document.getElementById("suttClearBtn");
-  const hiddenInput = document.getElementById("filterSutt");
+function handleSuttInput(tabKey = "analitik", query) {
+  const menu = document.getElementById(`suttDropdownMenu_${tabKey}`);
+  const clearBtn = document.getElementById(`suttClearBtn_${tabKey}`);
+  const hiddenInput = document.getElementById(`filterSutt_${tabKey}`);
 
   if (menu && menu.classList.contains("hidden")) {
-    openSuttDropdown();
+    openSuttDropdown(tabKey);
   }
 
   if (clearBtn) {
@@ -204,34 +215,37 @@ function handleSuttInput(query) {
     else clearBtn.classList.add("hidden");
   }
 
-  renderSuttDropdown(query);
+  renderSuttDropdown(tabKey, query);
 
   // Jika input dikosongkan total, langsung reset filter
   if (!query.trim() && hiddenInput && hiddenInput.value) {
     hiddenInput.value = "";
-    applyFilters();
+    applyFilters(tabKey);
   }
 }
 
 // Keyboard navigation untuk SUTT combobox (ArrowUp, ArrowDown, Enter, Esc)
-function handleSuttKeydown(e) {
-  const menu = document.getElementById("suttDropdownMenu");
-  const items = document.querySelectorAll("#suttOptionsList .sutt-option-item, #suttOptionsList [data-value='']");
+function handleSuttKeydown(tabKey = "analitik", e) {
+  const menu = document.getElementById(`suttDropdownMenu_${tabKey}`);
+  const items = document.querySelectorAll(`#suttOptionsList_${tabKey} .sutt-option-item, #suttOptionsList_${tabKey} [data-value='']`);
   
   if (e.key === "Escape") {
-    closeSuttDropdown();
+    closeSuttDropdown(tabKey);
     return;
   }
+
+  let activeIndex = suttActiveIndexMap[tabKey] !== undefined ? suttActiveIndexMap[tabKey] : -1;
 
   if (e.key === "ArrowDown") {
     e.preventDefault();
     if (!menu || menu.classList.contains("hidden")) {
-      openSuttDropdown();
+      openSuttDropdown(tabKey);
       return;
     }
     if (items.length > 0) {
-      suttActiveIndex = (suttActiveIndex + 1) % items.length;
-      highlightActiveSuttItem(items);
+      activeIndex = (activeIndex + 1) % items.length;
+      suttActiveIndexMap[tabKey] = activeIndex;
+      highlightActiveSuttItem(tabKey, items, activeIndex);
     }
     return;
   }
@@ -239,36 +253,37 @@ function handleSuttKeydown(e) {
   if (e.key === "ArrowUp") {
     e.preventDefault();
     if (!menu || menu.classList.contains("hidden")) {
-      openSuttDropdown();
+      openSuttDropdown(tabKey);
       return;
     }
     if (items.length > 0) {
-      suttActiveIndex = (suttActiveIndex - 1 + items.length) % items.length;
-      highlightActiveSuttItem(items);
+      activeIndex = (activeIndex - 1 + items.length) % items.length;
+      suttActiveIndexMap[tabKey] = activeIndex;
+      highlightActiveSuttItem(tabKey, items, activeIndex);
     }
     return;
   }
 
   if (e.key === "Enter") {
     e.preventDefault();
-    if (items.length > 0 && suttActiveIndex >= 0 && suttActiveIndex < items.length) {
-      const selectedVal = items[suttActiveIndex].getAttribute("data-value");
-      selectSuttOption(selectedVal);
+    if (items.length > 0 && activeIndex >= 0 && activeIndex < items.length) {
+      const selectedVal = items[activeIndex].getAttribute("data-value");
+      selectSuttOption(tabKey, selectedVal);
     } else {
       // Jika user tekan enter tanpa panah, pilih opsi pertama yang cocok
-      const firstItem = document.querySelector("#suttOptionsList .sutt-option-item");
+      const firstItem = document.querySelector(`#suttOptionsList_${tabKey} .sutt-option-item`);
       if (firstItem) {
-        selectSuttOption(firstItem.getAttribute("data-value"));
+        selectSuttOption(tabKey, firstItem.getAttribute("data-value"));
       } else {
-        closeSuttDropdown();
+        closeSuttDropdown(tabKey);
       }
     }
   }
 }
 
-function highlightActiveSuttItem(items) {
+function highlightActiveSuttItem(tabKey, items, activeIdx) {
   items.forEach((item, idx) => {
-    if (idx === suttActiveIndex) {
+    if (idx === activeIdx) {
       item.classList.add("bg-sky-100", "text-sky-900");
       item.scrollIntoView({ block: "nearest" });
     } else {
@@ -278,11 +293,11 @@ function highlightActiveSuttItem(items) {
 }
 
 // Update opsi dropdown SUTT agar mengikuti ULTG (cascading filter)
-function updateSuttOptions(preserveValue = true) {
-  const ultgSelect = document.getElementById("filterUltg");
-  const hiddenInput = document.getElementById("filterSutt");
-  const searchInput = document.getElementById("suttSearchInput");
-  const clearBtn = document.getElementById("suttClearBtn");
+function updateSuttOptions(tabKey = "analitik", preserveValue = true) {
+  const ultgSelect = document.getElementById(`filterUltg_${tabKey}`);
+  const hiddenInput = document.getElementById(`filterSutt_${tabKey}`);
+  const searchInput = document.getElementById(`suttSearchInput_${tabKey}`);
+  const clearBtn = document.getElementById(`suttClearBtn_${tabKey}`);
   if (!hiddenInput) return;
 
   const selectedUltg = ultgSelect ? ultgSelect.value : "";
@@ -309,19 +324,19 @@ function updateSuttOptions(preserveValue = true) {
   }
 
   // Render ulang dropdown list
-  renderSuttDropdown("");
+  renderSuttDropdown(tabKey, "");
 }
 
 // Event handler saat user memilih ULTG
-function onUltgChange() {
-  updateSuttOptions(false);
-  applyFilters();
+function onUltgChange(tabKey = "analitik") {
+  updateSuttOptions(tabKey, false);
+  applyFilters(tabKey);
 }
 
 // Event handler saat user memilih SUTT
-function onSuttChange() {
-  const ultgSelect = document.getElementById("filterUltg");
-  const hiddenInput = document.getElementById("filterSutt");
+function onSuttChange(tabKey = "analitik") {
+  const ultgSelect = document.getElementById(`filterUltg_${tabKey}`);
+  const hiddenInput = document.getElementById(`filterSutt_${tabKey}`);
   const selectedSutt = hiddenInput ? hiddenInput.value : "";
 
   // Jika user memilih SUTT tertentu saat ULTG masih kosong, sinkronkan ULTG otomatis
@@ -329,17 +344,17 @@ function onSuttChange() {
     const parentUltg = getUltgByJalur(selectedSutt);
     if (parentUltg) {
       ultgSelect.value = parentUltg;
-      updateSuttOptions(true);
+      updateSuttOptions(tabKey, true);
     }
   }
-  applyFilters();
+  applyFilters(tabKey);
 }
 
-// Event handler untuk tombol pill kategori Kolom AP
+// Event handler untuk tombol pill kategori Kolom AL
 function setCategoryFilter(kat) {
-  const filterKat = document.getElementById("filterKategori");
+  const filterKat = document.getElementById("filterKategori_satwa");
   if (filterKat) filterKat.value = kat;
-  applyFilters();
+  applyFilters("satwa");
 }
 
 // Update styling visual tombol pill filter aktif
@@ -364,21 +379,66 @@ function updateFilterButtonStyles(selectedKat) {
   });
 }
 
-// Fungsi utama: menyaring data menara berdasarkan semua input filter
-function applyFilters() {
-  const searchInput = document.getElementById("searchInput");
-  const filterUltg = document.getElementById("filterUltg");
-  const filterSutt = document.getElementById("filterSutt");
-  const filterKategori = document.getElementById("filterKategori");
-  const filterProteksi = document.getElementById("filterProteksi");
+/**
+ * FUNGSI UTAMA: MENYARING DATA MENARA BERDASARKAN TAB AKTIF
+ * @param {string} targetTab - 'analitik' | 'manajemen' | 'satwa' | 'tindak-lanjut'
+ */
+function applyFilters(targetTab) {
+  const activeTab = targetTab || (typeof currentActiveTab !== "undefined" ? currentActiveTab : "analitik");
 
-  const query = (searchInput ? searchInput.value : "").toLowerCase().trim();
-  const ultg = filterUltg ? filterUltg.value : "";
-  const sutt = filterSutt ? filterSutt.value : "";
-  const kategori = filterKategori ? filterKategori.value : "";
-  const proteksi = filterProteksi ? filterProteksi.value : "";
+  if (activeTab === "tindak-lanjut") {
+    if (typeof updateTindakLanjutView === "function") {
+      updateTindakLanjutView();
+    }
+    return;
+  }
 
+  // 1. Ekstrak kriteria filter sesuai tab aktif
+  let query = "";
+  let ultg = "";
+  let sutt = "";
+  let proteksi = "";
+  let perangkat = "";
+  let kategori = "";
+  let aktivitas = "";
+
+  if (activeTab === "analitik") {
+    const elSearch = document.getElementById("searchInput_analitik");
+    const elUltg = document.getElementById("filterUltg_analitik");
+    const elSutt = document.getElementById("filterSutt_analitik");
+
+    query = (elSearch ? elSearch.value : "").toLowerCase().trim();
+    ultg = elUltg ? elUltg.value : "";
+    sutt = elSutt ? elSutt.value : "";
+  } else if (activeTab === "manajemen") {
+    const elSearch = document.getElementById("searchInput_manajemen");
+    const elUltg = document.getElementById("filterUltg_manajemen");
+    const elSutt = document.getElementById("filterSutt_manajemen");
+    const elProt = document.getElementById("filterProteksi_manajemen");
+    const elDev = document.getElementById("filterPerangkat_manajemen");
+
+    query = (elSearch ? elSearch.value : "").toLowerCase().trim();
+    ultg = elUltg ? elUltg.value : "";
+    sutt = elSutt ? elSutt.value : "";
+    proteksi = elProt ? elProt.value : "";
+    perangkat = elDev ? elDev.value : "";
+  } else if (activeTab === "satwa") {
+    const elSearch = document.getElementById("searchInput_satwa");
+    const elUltg = document.getElementById("filterUltg_satwa");
+    const elSutt = document.getElementById("filterSutt_satwa");
+    const elKat = document.getElementById("filterKategori_satwa");
+    const elAkt = document.getElementById("filterAktivitas_satwa");
+
+    query = (elSearch ? elSearch.value : "").toLowerCase().trim();
+    ultg = elUltg ? elUltg.value : "";
+    sutt = elSutt ? elSutt.value : "";
+    kategori = elKat ? elKat.value : "";
+    aktivitas = elAkt ? elAkt.value : "";
+  }
+
+  // 2. Filter dataset menara (towerData)
   filteredData = towerData.filter(item => {
+    // A. Query Text Match
     const isGaSesuaiQuery = query === "ga sesuai" || query === "tidak sesuai";
     const matchesQuery = !query || 
       (isGaSesuaiQuery && item.aktivitas === "Tidak Sesuai") ||
@@ -390,23 +450,36 @@ function applyFilters() {
       (item.aktivitas && item.aktivitas.toLowerCase().includes(query)) ||
       (item.rekomendasi && item.rekomendasi.toLowerCase().includes(query));
 
+    // B. ULTG & SUTT Cascading
     const matchesUltg = !ultg || item.ultg === ultg;
     const matchesSutt = !sutt || item.jalur === sutt;
-    const matchesKategori = !kategori || item.kategori === kategori;
-    const matchesProteksi = !proteksi || item.proteksi === proteksi;
 
-    return matchesQuery && matchesUltg && matchesSutt && matchesKategori && matchesProteksi;
+    // C. Tab Manajemen: Filter Proteksi & Perangkat Kolom E-Z
+    const matchesProteksi = !proteksi || item.proteksi === proteksi;
+    const matchesPerangkat = !perangkat || (item.perangkat && item.perangkat.toUpperCase().includes(perangkat.toUpperCase()));
+
+    // D. Tab Satwa: Filter Kategori Kolom AL & Evaluasi Kolom AM
+    const matchesKategori = !kategori || item.kategori === kategori;
+    const matchesAktivitas = !aktivitas || item.aktivitas === aktivitas;
+
+    return matchesQuery && matchesUltg && matchesSutt && matchesProteksi && matchesPerangkat && matchesKategori && matchesAktivitas;
   });
 
-  // Update styling tombol pill
-  updateFilterButtonStyles(kategori);
+  // 3. Update view dan metrik sesuai tab
+  if (activeTab === "analitik" && typeof updateAnalitikView === "function") {
+    updateAnalitikView(filteredData);
+  } else if (activeTab === "satwa") {
+    updateMetrics(filteredData);
+    updateFilterButtonStyles(kategori);
+    currentPage = 1;
+    if (typeof renderTable === "function") renderTable();
+  } else if (activeTab === "manajemen") {
+    updateMetrics(filteredData);
+    currentPage = 1;
+    if (typeof renderTable === "function") renderTable();
+  }
 
-  // Hitung ulang metrik dan render tabel
-  updateMetrics(filteredData);
-  if (typeof updateAnalitikView === "function") updateAnalitikView(filteredData);
-  if (typeof updateTindakLanjutView === "function") updateTindakLanjutView(filteredData);
-
-  // Update counter pada tab header
+  // 4. Update counter pada tab header
   const elHeaderTower = document.getElementById("headerCountTower");
   if (elHeaderTower) elHeaderTower.innerText = towerData.length.toLocaleString("id-ID");
   const elHeaderTindak = document.getElementById("headerCountTindakLanjut");
@@ -414,35 +487,90 @@ function applyFilters() {
     const apTotal = towerData.filter(t => t.kolomAP && t.kolomAP.trim() !== "").length;
     elHeaderTindak.innerText = apTotal;
   }
-
-  currentPage = 1;
-  renderTable();
 }
 
-// Reset semua filter kembali ke awal
-function resetAllFilters() {
-  if (document.getElementById("searchInput")) document.getElementById("searchInput").value = "";
-  if (document.getElementById("filterUltg")) document.getElementById("filterUltg").value = "";
-  if (document.getElementById("filterKategori")) document.getElementById("filterKategori").value = "";
-  if (document.getElementById("filterProteksi")) document.getElementById("filterProteksi").value = "";
-  
-  const hiddenInput = document.getElementById("filterSutt");
-  const searchInput = document.getElementById("suttSearchInput");
-  const clearBtn = document.getElementById("suttClearBtn");
-  if (hiddenInput) hiddenInput.value = "";
-  if (searchInput) searchInput.value = "";
-  if (clearBtn) clearBtn.classList.add("hidden");
+/**
+ * Reset filter spesifik per tab
+ */
+function resetFilters(tabKey = "analitik") {
+  if (tabKey === "analitik") {
+    const elSearch = document.getElementById("searchInput_analitik");
+    const elUltg = document.getElementById("filterUltg_analitik");
+    const elSutt = document.getElementById("filterSutt_analitik");
+    const elSuttSearch = document.getElementById("suttSearchInput_analitik");
+    const elClear = document.getElementById("suttClearBtn_analitik");
 
-  updateSuttOptions(false);
-  applyFilters();
+    if (elSearch) elSearch.value = "";
+    if (elUltg) elUltg.value = "";
+    if (elSutt) elSutt.value = "";
+    if (elSuttSearch) elSuttSearch.value = "";
+    if (elClear) elClear.classList.add("hidden");
+
+    updateSuttOptions("analitik", false);
+    applyFilters("analitik");
+  } else if (tabKey === "manajemen") {
+    const elSearch = document.getElementById("searchInput_manajemen");
+    const elUltg = document.getElementById("filterUltg_manajemen");
+    const elSutt = document.getElementById("filterSutt_manajemen");
+    const elSuttSearch = document.getElementById("suttSearchInput_manajemen");
+    const elClear = document.getElementById("suttClearBtn_manajemen");
+    const elProt = document.getElementById("filterProteksi_manajemen");
+    const elDev = document.getElementById("filterPerangkat_manajemen");
+
+    if (elSearch) elSearch.value = "";
+    if (elUltg) elUltg.value = "";
+    if (elSutt) elSutt.value = "";
+    if (elSuttSearch) elSuttSearch.value = "";
+    if (elClear) elClear.classList.add("hidden");
+    if (elProt) elProt.value = "";
+    if (elDev) elDev.value = "";
+
+    updateSuttOptions("manajemen", false);
+    applyFilters("manajemen");
+  } else if (tabKey === "satwa") {
+    const elSearch = document.getElementById("searchInput_satwa");
+    const elUltg = document.getElementById("filterUltg_satwa");
+    const elSutt = document.getElementById("filterSutt_satwa");
+    const elSuttSearch = document.getElementById("suttSearchInput_satwa");
+    const elClear = document.getElementById("suttClearBtn_satwa");
+    const elKat = document.getElementById("filterKategori_satwa");
+    const elAkt = document.getElementById("filterAktivitas_satwa");
+
+    if (elSearch) elSearch.value = "";
+    if (elUltg) elUltg.value = "";
+    if (elSutt) elSutt.value = "";
+    if (elSuttSearch) elSuttSearch.value = "";
+    if (elClear) elClear.classList.add("hidden");
+    if (elKat) elKat.value = "";
+    if (elAkt) elAkt.value = "";
+
+    updateSuttOptions("satwa", false);
+    applyFilters("satwa");
+  } else if (tabKey === "tindak-lanjut") {
+    if (typeof resetTindakLanjutFilters === "function") {
+      resetTindakLanjutFilters();
+    }
+  }
+}
+
+// Reset semua filter di semua tab (Backward Compatibility)
+function resetAllFilters() {
+  resetFilters("analitik");
+  resetFilters("manajemen");
+  resetFilters("satwa");
+  if (typeof resetTindakLanjutFilters === "function") {
+    resetTindakLanjutFilters();
+  }
 }
 
 // Tutup dropdown SUTT saat pengguna mengklik di luar area combobox
 if (typeof document !== "undefined" && document.addEventListener) {
   document.addEventListener("click", function(event) {
-    const container = document.getElementById("suttComboboxContainer");
-    if (container && !container.contains(event.target)) {
-      closeSuttDropdown();
-    }
+    ["analitik", "manajemen", "satwa"].forEach(tab => {
+      const container = document.getElementById(`suttComboboxContainer_${tab}`);
+      if (container && !container.contains(event.target)) {
+        closeSuttDropdown(tab);
+      }
+    });
   });
 }

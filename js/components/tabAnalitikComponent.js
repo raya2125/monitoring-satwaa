@@ -156,28 +156,30 @@ function renderAnalitikComponent() {
  * Filter data menara rawan satwa yang belum memiliki proteksi
  */
 function tinjauMenaraBelumProteksi() {
-  if (typeof resetAllFilters === "function") resetAllFilters();
-  const filterProt = document.getElementById("filterProteksi");
-  if (filterProt) filterProt.value = "BELUM TERPASANG";
-
-  // Alihkan tampilan ke Tab Manajemen Asset
   if (typeof switchTab === "function") switchTab("manajemen");
-  if (typeof applyFilters === "function") applyFilters();
+  if (typeof resetFilters === "function") resetFilters("manajemen");
+  const filterProt = document.getElementById("filterProteksi_manajemen");
+  if (filterProt) filterProt.value = "BELUM TERPASANG";
+  if (typeof applyFilters === "function") applyFilters("manajemen");
 }
 
 /**
  * Filter interaktif saat user mengklik sel di tabel matriks
  */
 function filterMatrixCell(kategori, proteksi) {
-  if (typeof resetAllFilters === "function") resetAllFilters();
-  const filterKat = document.getElementById("filterKategori");
-  const filterProt = document.getElementById("filterProteksi");
-
-  if (filterKat) filterKat.value = kategori;
-  if (filterProt) filterProt.value = proteksi;
-
-  if (typeof switchTab === "function") switchTab("manajemen");
-  if (typeof applyFilters === "function") applyFilters();
+  if (proteksi && (!kategori || kategori === "(Blanks) / Tidak Ada")) {
+    if (typeof switchTab === "function") switchTab("manajemen");
+    if (typeof resetFilters === "function") resetFilters("manajemen");
+    const filterProt = document.getElementById("filterProteksi_manajemen");
+    if (filterProt) filterProt.value = proteksi;
+    if (typeof applyFilters === "function") applyFilters("manajemen");
+  } else {
+    if (typeof switchTab === "function") switchTab("satwa");
+    if (typeof resetFilters === "function") resetFilters("satwa");
+    const filterKat = document.getElementById("filterKategori_satwa");
+    if (filterKat && kategori) filterKat.value = kategori;
+    if (typeof applyFilters === "function") applyFilters("satwa");
+  }
 }
 
 /**

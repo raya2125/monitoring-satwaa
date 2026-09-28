@@ -540,7 +540,9 @@ function openEditModal(no) {
 function openAddNewModal() {
   const newName = prompt("Masukkan Nama Tower Baru (misal: TOWER SUTT 150kV KRSAN - NRING #0023):");
   if (!newName) return;
-  const currentUltg = (document.getElementById("filterUltg") && document.getElementById("filterUltg").value) || "ULTG BETUNG";
+  const currentUltg = (document.getElementById(`filterUltg_${currentActiveTab}`) && document.getElementById(`filterUltg_${currentActiveTab}`).value) ||
+                      (document.getElementById("filterUltg_manajemen") && document.getElementById("filterUltg_manajemen").value) ||
+                      (document.getElementById("filterUltg") && document.getElementById("filterUltg").value) || "ULTG BETUNG";
   const availableJalurs = typeof getJalursForUltg === "function" ? getJalursForUltg(currentUltg) : [];
   const defaultJalur = availableJalurs[0] || "TRS 150kV TLKLP - BTUNG";
 

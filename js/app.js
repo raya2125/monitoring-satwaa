@@ -1,6 +1,7 @@
 /**
  * ENTRY POINT & INISIALISASI UTAMA APLIKASI
  * Pengelolaan Navigasi 4 Tab (Ringkasan, Manajemen, Satwa, Tindak Lanjut)
+ * dengan Filter Bar Dinamis Spesifik per Tab
  */
 
 let currentActiveTab = "analitik";
@@ -31,7 +32,18 @@ function switchTab(tabId) {
     }
   });
 
-  // 2. Tampilkan dan sembunyikan kontainer tampilan sesuai tab
+  // 2. Tampilkan filter bar spesifik sesuai tab yang sedang aktif
+  const fbAnalitik = document.getElementById("filterBarAnalitik");
+  const fbManajemen = document.getElementById("filterBarManajemen");
+  const fbSatwa = document.getElementById("filterBarSatwa");
+  const fbTindakLanjut = document.getElementById("filterBarTindakLanjut");
+
+  if (fbAnalitik) fbAnalitik.classList.toggle("hidden", tabId !== "analitik");
+  if (fbManajemen) fbManajemen.classList.toggle("hidden", tabId !== "manajemen");
+  if (fbSatwa) fbSatwa.classList.toggle("hidden", tabId !== "satwa");
+  if (fbTindakLanjut) fbTindakLanjut.classList.toggle("hidden", tabId !== "tindak-lanjut");
+
+  // 3. Tampilkan dan sembunyikan kontainer tampilan utama sesuai tab
   const elAnalitik = document.getElementById("viewAnalitik");
   const elKpi = document.getElementById("kpiSection");
   const elClass = document.getElementById("classificationSection");
@@ -46,17 +58,12 @@ function switchTab(tabId) {
   if (elTable) elTable.classList.toggle("hidden", tabId !== "manajemen" && tabId !== "satwa");
   if (elTindak) elTindak.classList.toggle("hidden", tabId !== "tindak-lanjut");
 
-  // 3. Update data pada tampilan yang aktif
-  if (tabId === "analitik" && typeof updateAnalitikView === "function") {
-    updateAnalitikView(filteredData);
-  } else if (tabId === "tindak-lanjut" && typeof updateTindakLanjutView === "function") {
-    updateTindakLanjutView(filteredData);
-  } else if (tabId === "manajemen" || tabId === "satwa") {
-    updateMetrics(filteredData);
-    renderTable();
+  // 4. Update data dan filter pada tampilan yang aktif
+  if (typeof applyFilters === "function") {
+    applyFilters(tabId);
   }
 
-  // 4. Render ulang icon Lucide
+  // 5. Render ulang icon Lucide
   if (window.lucide && typeof window.lucide.createIcons === "function") {
     window.lucide.createIcons();
   }
@@ -77,26 +84,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. Inisialisasi dataset lengkap
   if (typeof initDataset === "function") initDataset();
 
-  // 3. Setup opsi awal dropdown SUTT (mengikuti filter ULTG)
-  if (typeof updateSuttOptions === "function") updateSuttOptions(false);
+  // 3. Setup opsi awal dropdown SUTT (mengikuti filter ULTG masing-masing tab)
+  if (typeof updateSuttOptions === "function") {
+    updateSuttOptions("analitik", false);
+    updateSuttOptions("manajemen", false);
+    updateSuttOptions("satwa", false);
+  }
 
-  // 4. Hitung metrik awal dan render isi tabel
-  if (typeof applyFilters === "function") applyFilters();
-
-  // 5. Set tab awal aktif ke Ringkasan & Analitik (sesuai Screenshot 1)
+  // 4. Set tab awal aktif ke Ringkasan & Analitik
   switchTab("analitik");
 
-  // 6. Sinkronisasi data live dari Google Spreadsheet secara otomatis di background
+  // 5. Sinkronisasi data live dari Google Spreadsheet secara otomatis di background
   if (typeof loadSpreadsheetData === "function") {
     loadSpreadsheetData(false).then(() => {
       // Perbarui tampilan tab yang sedang aktif dengan data live
-      if (currentActiveTab === "analitik" && typeof updateAnalitikView === "function") {
-        updateAnalitikView(filteredData);
-      } else if (currentActiveTab === "tindak-lanjut" && typeof updateTindakLanjutView === "function") {
-        updateTindakLanjutView(filteredData);
-      } else {
-        if (typeof updateMetrics === "function") updateMetrics(filteredData);
-        if (typeof renderTable === "function") renderTable();
+      if (typeof applyFilters === "function") {
+        applyFilters(currentActiveTab);
       }
 
       if (window.lucide && typeof window.lucide.createIcons === "function") {
