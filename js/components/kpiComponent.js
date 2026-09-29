@@ -62,7 +62,8 @@ function renderKpiComponent() {
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs">
           <!-- E/G: TOP SKOR -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezTopSkorL1" onclick="filterByDeviceEZ('ezTopSkorL1','TOP SKOR')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan TOP SKOR">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">TOP SKOR (E/G)</div>
               <div class="text-[10px] text-slate-400">Top Protector</div>
@@ -71,7 +72,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- I/K: IRON MAN -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezIronmanL1" onclick="filterByDeviceEZ('ezIronmanL1','IRON MAN')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan IRON MAN">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">IRON MAN (I/K)</div>
               <div class="text-[10px] text-slate-400">Pelat Traverse</div>
@@ -80,7 +82,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- M: BOLUVES -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezBoluves" onclick="filterByDeviceEZ('ezBoluves','BOLUVES')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan BOLUVES">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">BOLUVES (M)</div>
               <div class="text-[10px] text-slate-400">Bola Luncur</div>
@@ -89,7 +92,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- O: JARING -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezJaring" onclick="filterByDeviceEZ('ezJaring','JARING')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan JARING">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">JARING (O)</div>
               <div class="text-[10px] text-slate-400">Pengaman</div>
@@ -98,7 +102,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- Q: PELAKOR -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezPelakor" onclick="filterByDeviceEZ('ezPelakor','PELAKOR')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan PELAKOR">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">PELAKOR (Q)</div>
               <div class="text-[10px] text-slate-400">Penghalang Panjat</div>
@@ -107,7 +112,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- S: KAWAT SILET -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezKawatSilet" onclick="filterByDeviceEZ('ezKawatSilet','KAWAT SILET')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan KAWAT SILET">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">KAWAT SILET (S)</div>
               <div class="text-[10px] text-slate-400">Kawat Duri</div>
@@ -116,7 +122,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- U: ASB -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezAsb" onclick="filterByDeviceEZ('ezAsb','ASB')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan ASB">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">ASB (U)</div>
               <div class="text-[10px] text-slate-400">Anti Satwa Burung</div>
@@ -125,7 +132,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- W: PEMVES -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezPemves" onclick="filterByDeviceEZ('ezPemves','PEMVES')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan PEMVES">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">PEMVES (W)</div>
               <div class="text-[10px] text-slate-400">Perisai Isolator</div>
@@ -134,7 +142,8 @@ function renderKpiComponent() {
           </div>
 
           <!-- Y: TOGAR ABES -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-device-card="ezTogarAbes" onclick="filterByDeviceEZ('ezTogarAbes','TOGAR ABES')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition select-none" title="Klik untuk filter menara dengan TOGAR ABES">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">TOGAR ABES (Y)</div>
               <div class="text-[10px] text-slate-400">Top Guard</div>
@@ -142,6 +151,7 @@ function renderKpiComponent() {
             <span id="rekapEzTogarAbes" class="text-sm font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-lg">0</span>
           </div>
         </div>
+
       </div>
 
     </div>

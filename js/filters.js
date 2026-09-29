@@ -379,6 +379,33 @@ function updateFilterButtonStyles(selectedKat) {
   });
 }
 
+// Filter aktif berdasarkan klik card perangkat EZ
+let activeDeviceEZFilter = "";
+
+// Filter tabel berdasarkan perangkat EZ yang diklik dari card rekap
+function filterByDeviceEZ(deviceKey, deviceName) {
+  // Toggle: klik lagi untuk reset
+  if (activeDeviceEZFilter === deviceKey) {
+    activeDeviceEZFilter = "";
+  } else {
+    activeDeviceEZFilter = deviceKey;
+  }
+
+  // Update visual aktif card
+  document.querySelectorAll("[data-device-card]").forEach(function(el) {
+    const isActive = el.getAttribute("data-device-card") === deviceKey && activeDeviceEZFilter !== "";
+    if (isActive) {
+      el.classList.add("ring-2", "ring-emerald-400", "bg-emerald-50", "border-emerald-300");
+      el.classList.remove("bg-slate-50", "border-slate-200");
+    } else {
+      el.classList.remove("ring-2", "ring-emerald-400", "bg-emerald-50", "border-emerald-300");
+      el.classList.add("bg-slate-50", "border-slate-200");
+    }
+  });
+
+  applyFilters("manajemen");
+}
+
 /**
  * FUNGSI UTAMA: MENYARING DATA MENARA BERDASARKAN TAB AKTIF
  * @param {string} targetTab - 'analitik' | 'manajemen' | 'satwa' | 'tindak-lanjut'
@@ -458,11 +485,14 @@ function applyFilters(targetTab) {
     const matchesProteksi = !proteksi || item.proteksi === proteksi;
     const matchesPerangkat = !perangkat || (item.perangkat && item.perangkat.toUpperCase().includes(perangkat.toUpperCase()));
 
+    // C2. Filter dari klik card rekap EZ
+    const matchesDeviceEZ = !activeDeviceEZFilter || Boolean(item[activeDeviceEZFilter]);
+
     // D. Tab Satwa: Filter Kategori Kolom AL & Evaluasi Kolom AM
     const matchesKategori = !kategori || item.kategori === kategori;
     const matchesAktivitas = !aktivitas || item.aktivitas === aktivitas;
 
-    return matchesQuery && matchesUltg && matchesSutt && matchesProteksi && matchesPerangkat && matchesKategori && matchesAktivitas;
+    return matchesQuery && matchesUltg && matchesSutt && matchesProteksi && matchesPerangkat && matchesDeviceEZ && matchesKategori && matchesAktivitas;
   });
 
   // 3. Update view dan metrik sesuai tab
