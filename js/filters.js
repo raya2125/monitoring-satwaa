@@ -554,6 +554,11 @@ function resetFilters(tabKey = "analitik") {
     if (elClear) elClear.classList.add("hidden");
     if (elProt) elProt.value = "";
     if (elDev) elDev.value = "";
+    activeDeviceEZFilter = "";
+    document.querySelectorAll("[data-device-card]").forEach(function(el) {
+      el.classList.remove("ring-2", "ring-emerald-400", "bg-emerald-50", "border-emerald-300");
+      el.classList.add("bg-slate-50", "border-slate-200");
+    });
 
     updateSuttOptions("manajemen", false);
     applyFilters("manajemen");

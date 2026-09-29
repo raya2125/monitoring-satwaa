@@ -10,6 +10,7 @@ let tindakLanjutSearch = "";
 let tindakLanjutUltgFilter = "";
 let tindakLanjutSatwaFilter = "";
 let tindakLanjutStatusFilter = ""; // "semua", "sudah", "belum"
+let activeRencanaFilter = ""; // Filter dari klik card rekap rencana (Kolom AS - BA)
 let tindakLanjutPage = 1;
 let tindakLanjutPageSize = 15;
 let activeTindakLanjutTowerNo = null;
@@ -75,7 +76,8 @@ function renderTindakLanjutComponent() {
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs">
 
           <!-- AS: BOLUVES -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="boluves" onclick="filterByRencana('boluves','BOLUVES')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan BOLUVES">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">BOLUVES (AS)</div>
               <div class="text-[10px] text-slate-400">Bola Luncur</div>
@@ -84,7 +86,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AT: JARING -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="jaring" onclick="filterByRencana('jaring','JARING')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan JARING">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">JARING (AT)</div>
               <div class="text-[10px] text-slate-400">Pengaman</div>
@@ -93,7 +96,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AU: PEMVES -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="pemves" onclick="filterByRencana('pemves','PEMVES')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan PEMVES">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">PEMVES (AU)</div>
               <div class="text-[10px] text-slate-400">Perisai Isolator</div>
@@ -102,7 +106,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AV: PELAKOR -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="pelakor" onclick="filterByRencana('pelakor','PELAKOR')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan PELAKOR">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">PELAKOR (AV)</div>
               <div class="text-[10px] text-slate-400">Penghalang Panjat</div>
@@ -111,7 +116,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AW: TOP SKOR -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="topSkor" onclick="filterByRencana('topSkor','TOP SKOR')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan TOP SKOR">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">TOP SKOR (AW)</div>
               <div class="text-[10px] text-slate-400">Top Protector</div>
@@ -120,7 +126,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AX: IRON MAN -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="ironMan" onclick="filterByRencana('ironMan','IRON MAN')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan IRON MAN">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">IRON MAN (AX)</div>
               <div class="text-[10px] text-slate-400">Pelat Traverse</div>
@@ -129,7 +136,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AY: KAWAT SILET -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="kawatSilet" onclick="filterByRencana('kawatSilet','KAWAT SILET')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan KAWAT SILET">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">KAWAT SILET (AY)</div>
               <div class="text-[10px] text-slate-400">Kawat Duri</div>
@@ -138,7 +146,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- AZ: ASB -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="asb" onclick="filterByRencana('asb','ASB')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan ASB">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">ASB (AZ)</div>
               <div class="text-[10px] text-slate-400">Anti Satwa Burung</div>
@@ -147,7 +156,8 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- BA: TOGAR ABES -->
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div data-rencana-card="togarAbes" onclick="filterByRencana('togarAbes','TOGAR ABES')"
+               class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-sky-300 hover:bg-sky-50/50 transition select-none" title="Klik untuk filter rencana dengan TOGAR ABES">
             <div>
               <div class="font-bold text-slate-700 text-[11px]">TOGAR ABES (BA)</div>
               <div class="text-[10px] text-slate-400">Top Guard</div>
@@ -396,6 +406,11 @@ function getFilteredTindakLanjutData() {
     list = list.filter(t => !hasAnyTindakLanjut(t));
   }
 
+  // 6. Filter Rencana Perangkat dari klik Card Rekap (Kolom AS - BA)
+  if (activeRencanaFilter) {
+    list = list.filter(t => Boolean(t[activeRencanaFilter]));
+  }
+
   return list;
 }
 
@@ -636,12 +651,46 @@ function toggleTindakLanjutScope(onlyAP) {
   updateTindakLanjutView();
 }
 
+// Filter aktif berdasarkan klik card rencana perangkat (Kolom AS - BA)
+function filterByRencana(rencanaKey, rencanaName) {
+  // Toggle: klik lagi untuk reset
+  if (activeRencanaFilter === rencanaKey) {
+    activeRencanaFilter = "";
+  } else {
+    activeRencanaFilter = rencanaKey;
+  }
+
+  // Update visual aktif card rencana
+  document.querySelectorAll("[data-rencana-card]").forEach(function(el) {
+    const isActive = el.getAttribute("data-rencana-card") === rencanaKey && activeRencanaFilter !== "";
+    if (isActive) {
+      el.classList.add("ring-2", "ring-sky-500", "bg-sky-50", "border-sky-300");
+      el.classList.remove("bg-slate-50", "border-slate-200");
+    } else {
+      el.classList.remove("ring-2", "ring-sky-500", "bg-sky-50", "border-sky-300");
+      el.classList.add("bg-slate-50", "border-slate-200");
+    }
+  });
+
+  tindakLanjutPage = 1;
+  updateTindakLanjutView();
+}
+if (typeof window !== "undefined") {
+  window.filterByRencana = filterByRencana;
+}
+
 function resetTindakLanjutFilters() {
   tindakLanjutSearch = "";
   tindakLanjutUltgFilter = "";
   tindakLanjutSatwaFilter = "";
   tindakLanjutStatusFilter = "";
+  activeRencanaFilter = "";
   tindakLanjutPage = 1;
+
+  document.querySelectorAll("[data-rencana-card]").forEach(function(el) {
+    el.classList.remove("ring-2", "ring-sky-500", "bg-sky-50", "border-sky-300");
+    el.classList.add("bg-slate-50", "border-slate-200");
+  });
 
   const elSearch = document.getElementById("tindakLanjutSearchInput");
   const elUltg = document.getElementById("tindakLanjutFilterUltg");
