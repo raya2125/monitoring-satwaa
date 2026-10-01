@@ -346,14 +346,20 @@ function renderTindakLanjutComponent() {
           </div>
 
           <!-- FOOTER ACTIONS -->
-          <div class="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100">
-            <button type="button" onclick="closeModalTindakLanjut()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs">
-              Batal
-            </button>
-            <button type="submit" id="btnSubmitTindakLanjut" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition">
-              <i data-lucide="check" class="w-4 h-4"></i>
-              <span>Simpan ke Spreadsheet (Kolom AR-BA)</span>
-            </button>
+          <div class="pt-4 flex items-center justify-between gap-2.5 border-t border-slate-100">
+            <span class="text-[11px] text-amber-700 font-medium flex items-center gap-1">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Ditampung ke draft (wajib ACC)</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="closeModalTindakLanjut()" class="px-3.5 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs">
+                Batal
+              </button>
+              <button type="submit" id="btnSubmitTindakLanjut" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                <span>Tampung ke Draft ACC</span>
+              </button>
+            </div>
           </div>
         </form>
 
@@ -541,11 +547,19 @@ function updateTindakLanjutView() {
         `</div>`;
     }
 
+    const isDraft = typeof stagingManager !== "undefined" && stagingManager.hasPending(item.no);
+    const draftBadge = isDraft 
+      ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 ml-1.5 cursor-pointer" onclick="event.stopPropagation(); stagingManager.openReviewModal(${item.no})" title="Menunggu ACC Supervisor (Klik untuk review)">
+           <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+           Draft ACC
+         </span>`
+      : "";
+
     return `
-      <tr class="hover:bg-slate-50/80 transition">
+      <tr class="${isDraft ? 'bg-amber-50/40 hover:bg-amber-100/50' : 'hover:bg-slate-50/80'} transition">
         <td class="py-3 px-3.5 text-center text-slate-400 font-medium">${globalIdx}</td>
         <td class="py-3 px-3.5">
-          <div class="font-bold text-slate-800">${item.nama}</div>
+          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${item.nama} ${draftBadge}</div>
           <div class="text-[11px] text-slate-400 mt-0.5">${item.jalur}</div>
         </td>
         <td class="py-3 px-3.5">
@@ -718,19 +732,50 @@ async function quickToggleTapak(no) {
   const item = towerData.find(t => t.no === no);
   if (!item) return;
 
-  item.tapakBool = !item.tapakBool;
-  item.tapak = item.tapakBool ? "Perlu Pembersihan Tapak" : "Tidak Diperlukan";
+  const newTapakBool = !item.tapakBool;
+  const newTapak = newTapakBool ? "Perlu Pembersihan Tapak" : "Tidak Diperlukan";
+  const newRekomendasi = (newTapakBool && (!item.rekomendasi || item.rekomendasi === "-"))
+    ? "Pembersihan Tapak Tower"
+    : item.rekomendasi;
 
-  // Perbarui rekomendasi jika kosong
-  if (item.tapakBool && (!item.rekomendasi || item.rekomendasi === "-")) {
-    item.rekomendasi = "Pembersihan Tapak Tower";
+  const payload = {
+    action: "updateTindakLanjut",
+    nama: item.nama,
+    ultg: item.ultg,
+    jalur: item.jalur,
+    boluves: item.boluves,
+    jaring: item.jaring,
+    pemves: item.pemves,
+    pelakor: item.pelakor,
+    topSkor: item.topSkor,
+    ironMan: item.ironMan,
+    kawatSilet: item.kawatSilet,
+    asb: item.asb,
+    togarAbes: item.togarAbes,
+    rekomendasi: newRekomendasi
+  };
+
+  const changeObj = {
+    type: "tindak-lanjut",
+    typeLabel: "Rencana Tindak Lanjut (Tapak Tower)",
+    towerNo: no,
+    towerName: item.nama,
+    ultg: item.ultg,
+    jalur: item.jalur,
+    payload: payload,
+    changesSummary: [
+      { label: "Tapak Tower", before: item.tapak || "Tidak Diperlukan", after: newTapak }
+    ],
+    newData: {
+      tapakBool: newTapakBool,
+      tapak: newTapak,
+      rekomendasi: newRekomendasi
+    }
+  };
+
+  if (typeof stagingManager !== "undefined") {
+    stagingManager.addPendingChange(changeObj);
   }
-
-  saveTowerDataLocally();
-  updateTindakLanjutView();
-
-  // Sinkronkan ke Google Spreadsheet
-  syncTindakLanjutToSpreadsheet(item);
 }
 
 /**
@@ -789,7 +834,7 @@ function closeModalTindakLanjut() {
 }
 
 /**
- * Submit form modal Tindak Lanjut
+ * Submit form modal Tindak Lanjut (Masuk ke Antrean Draft Staging)
  */
 async function submitTindakLanjutUpdate(event) {
   event.preventDefault();
@@ -798,40 +843,76 @@ async function submitTindakLanjutUpdate(event) {
   if (!item) return;
 
   // Baca nilai form (Kolom AS sampai BA)
-  item.boluves = document.getElementById("modalCheckBoluves").checked;
-  item.jaring = document.getElementById("modalCheckJaring").checked;
-  item.pemves = document.getElementById("modalCheckPemves").checked;
-  item.pelakor = document.getElementById("modalCheckPelakor").checked;
-  item.topSkor = document.getElementById("modalCheckTopSkor").checked;
-  item.ironMan = document.getElementById("modalCheckIronMan").checked;
-  item.kawatSilet = document.getElementById("modalCheckKawatSilet").checked;
-  item.asb = document.getElementById("modalCheckAsb").checked;
-  item.togarAbes = document.getElementById("modalCheckTogarAbes").checked;
+  const formBoluves = document.getElementById("modalCheckBoluves").checked;
+  const formJaring = document.getElementById("modalCheckJaring").checked;
+  const formPemves = document.getElementById("modalCheckPemves").checked;
+  const formPelakor = document.getElementById("modalCheckPelakor").checked;
+  const formTopSkor = document.getElementById("modalCheckTopSkor").checked;
+  const formIronMan = document.getElementById("modalCheckIronMan").checked;
+  const formKawatSilet = document.getElementById("modalCheckKawatSilet").checked;
+  const formAsb = document.getElementById("modalCheckAsb").checked;
+  const formTogarAbes = document.getElementById("modalCheckTogarAbes").checked;
 
   // Ringkas nama perangkat aktif untuk Rekomendasi
   const activeDevs = [];
-  if (item.boluves) activeDevs.push("BOLUVES");
-  if (item.jaring) activeDevs.push("JARING");
-  if (item.pemves) activeDevs.push("PEMVES");
-  if (item.pelakor) activeDevs.push("PELAKOR");
-  if (item.topSkor) activeDevs.push("TOP SKOR");
-  if (item.ironMan) activeDevs.push("IRON MAN");
-  if (item.kawatSilet) activeDevs.push("KAWAT SILET");
-  if (item.asb) activeDevs.push("ASB");
-  if (item.togarAbes) activeDevs.push("TOGAR ABES");
+  if (formBoluves) activeDevs.push("BOLUVES");
+  if (formJaring) activeDevs.push("JARING");
+  if (formPemves) activeDevs.push("PEMVES");
+  if (formPelakor) activeDevs.push("PELAKOR");
+  if (formTopSkor) activeDevs.push("TOP SKOR");
+  if (formIronMan) activeDevs.push("IRON MAN");
+  if (formKawatSilet) activeDevs.push("KAWAT SILET");
+  if (formAsb) activeDevs.push("ASB");
+  if (formTogarAbes) activeDevs.push("TOGAR ABES");
 
-  if (activeDevs.length > 0) {
-    item.rekomendasi = activeDevs.join(", ");
-  } else {
-    item.rekomendasi = "-";
+  const newRekomendasi = activeDevs.length > 0 ? activeDevs.join(", ") : "-";
+
+  const payload = {
+    action: "updateTindakLanjut",
+    nama: item.nama,
+    ultg: item.ultg,
+    jalur: item.jalur,
+    boluves: formBoluves,
+    jaring: formJaring,
+    pemves: formPemves,
+    pelakor: formPelakor,
+    topSkor: formTopSkor,
+    ironMan: formIronMan,
+    kawatSilet: formKawatSilet,
+    asb: formAsb,
+    togarAbes: formTogarAbes,
+    rekomendasi: newRekomendasi
+  };
+
+  const changeObj = {
+    type: "tindak-lanjut",
+    typeLabel: "Rencana Tindak Lanjut (Kolom AS s.d. BA)",
+    towerNo: no,
+    towerName: item.nama,
+    ultg: item.ultg,
+    jalur: item.jalur,
+    payload: payload,
+    changesSummary: [
+      { label: "Rencana Perangkat", before: item.rekomendasi || "-", after: newRekomendasi }
+    ],
+    newData: {
+      boluves: formBoluves,
+      jaring: formJaring,
+      pemves: formPemves,
+      pelakor: formPelakor,
+      topSkor: formTopSkor,
+      ironMan: formIronMan,
+      kawatSilet: formKawatSilet,
+      asb: formAsb,
+      togarAbes: formTogarAbes,
+      rekomendasi: newRekomendasi
+    }
+  };
+
+  if (typeof stagingManager !== "undefined") {
+    stagingManager.addPendingChange(changeObj);
   }
-
-  saveTowerDataLocally();
   closeModalTindakLanjut();
-  updateTindakLanjutView();
-
-  // Sinkronkan ke Google Apps Script
-  syncTindakLanjutToSpreadsheet(item);
 }
 
 /**

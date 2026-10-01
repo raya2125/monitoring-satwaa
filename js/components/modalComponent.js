@@ -104,12 +104,18 @@ function renderModalComponent() {
           </div>
 
           <!-- FOOTER ACTIONS -->
-          <div class="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100">
-            <button type="button" onclick="closeModalSatwaALAM()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium">Batal</button>
-            <button type="submit" id="btnSubmitSatwaALAM" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold flex items-center gap-2 shadow-sm transition">
-              <i data-lucide="save" class="w-4 h-4"></i>
-              <span>Simpan ke Spreadsheet (Kolom AL & AM)</span>
-            </button>
+          <div class="pt-3 flex items-center justify-between gap-2.5 border-t border-slate-100">
+            <span class="text-[11px] text-amber-700 font-medium flex items-center gap-1">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Ditampung ke draft (wajib ACC)</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="closeModalSatwaALAM()" class="px-3.5 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs">Batal</button>
+              <button type="submit" id="btnSubmitSatwaALAM" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                <span>Tampung ke Draft ACC</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -406,12 +412,18 @@ function renderModalComponent() {
           </div>
 
           <!-- FOOTER ACTIONS -->
-          <div class="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 shrink-0">
-            <button type="button" onclick="closeModalKolomEZ()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium">Batal</button>
-            <button type="submit" id="btnSubmitKolomEZ" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-2 shadow-sm transition">
-              <i data-lucide="save" class="w-4 h-4"></i>
-              <span>Simpan ke Spreadsheet (Kolom E–Z)</span>
-            </button>
+          <div class="pt-3 flex items-center justify-between gap-2.5 border-t border-slate-100 shrink-0">
+            <span class="text-[11px] text-amber-700 font-medium flex items-center gap-1">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Ditampung ke draft (wajib ACC)</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="closeModalKolomEZ()" class="px-3.5 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs">Batal</button>
+              <button type="submit" id="btnSubmitKolomEZ" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                <span>Tampung ke Draft ACC</span>
+              </button>
+            </div>
           </div>
         </form>
 

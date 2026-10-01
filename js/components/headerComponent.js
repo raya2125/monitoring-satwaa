@@ -26,6 +26,12 @@ function renderHeaderComponent() {
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
             Sinkronisasi Realtime Aktif
           </div>
+          <!-- ROLE BADGE / SWITCHER -->
+          <button id="btnHeaderRoleSwitcher" onclick="if(typeof stagingManager!=='undefined')stagingManager.toggleRoleModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition" title="Klik untuk beralih Peran (Operator / Supervisor)">
+            <span id="currentRoleText">👷 Operator (Input)</span>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+          </button>
+
           <button onclick="loadSpreadsheetData(true)" class="px-3.5 py-2 text-xs font-medium rounded-lg bg-emerald-700/90 hover:bg-emerald-600 text-white border border-emerald-600/70 flex items-center gap-2 shadow-sm transition" title="Tarik data terbaru dari Google Spreadsheet">
             <i id="syncButtonIcon" data-lucide="refresh-cw" class="w-4 h-4 text-emerald-100"></i>
             <span id="syncButtonText">Sinkronkan</span>

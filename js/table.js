@@ -142,12 +142,20 @@ function renderTable() {
         `;
       }
 
+      const isDraft = typeof stagingManager !== "undefined" && stagingManager.hasPending(item.no);
+      const draftBadge = isDraft 
+        ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 ml-1.5 cursor-pointer" onclick="event.stopPropagation(); stagingManager.openReviewModal(${item.no})" title="Menunggu ACC Supervisor (Klik untuk review)">
+             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+             Draft ACC
+           </span>`
+        : "";
+
       const row = document.createElement("tr");
-      row.className = "hover:bg-slate-50/80 transition-colors";
+      row.className = isDraft ? "bg-amber-50/40 hover:bg-amber-100/50 transition-colors" : "hover:bg-slate-50/80 transition-colors";
       row.innerHTML = `
         <td class="py-3 px-3.5 text-center font-medium text-slate-400 text-xs">${globalIdx}</td>
         <td class="py-3 px-3.5">
-          <div class="font-bold text-slate-800">${item.nama}</div>
+          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${item.nama} ${draftBadge}</div>
           <div class="text-[11px] text-slate-400 mt-0.5">${item.jalur}</div>
         </td>
         <td class="py-3 px-3.5">
@@ -219,12 +227,20 @@ function renderTable() {
         devInfo = `<span class="text-slate-400 font-normal text-[11px]">-</span>`;
       }
 
+      const isDraftSatwa = typeof stagingManager !== "undefined" && stagingManager.hasPending(item.no);
+      const draftBadgeSatwa = isDraftSatwa 
+        ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 ml-1.5 cursor-pointer" onclick="event.stopPropagation(); stagingManager.openReviewModal(${item.no})" title="Menunggu ACC Supervisor (Klik untuk review)">
+             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+             Draft ACC
+           </span>`
+        : "";
+
       const row = document.createElement("tr");
-      row.className = "hover:bg-slate-50/80 transition-colors";
+      row.className = isDraftSatwa ? "bg-amber-50/40 hover:bg-amber-100/50 transition-colors" : "hover:bg-slate-50/80 transition-colors";
       row.innerHTML = `
         <td class="py-3 px-3.5 text-center font-medium text-slate-400 text-xs">${globalIdx}</td>
         <td class="py-3 px-3.5">
-          <div class="font-bold text-slate-800">${item.nama}</div>
+          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${item.nama} ${draftBadgeSatwa}</div>
           <div class="text-[11px] text-slate-400 mt-0.5">${item.jalur}</div>
         </td>
         <td class="py-3 px-3.5">

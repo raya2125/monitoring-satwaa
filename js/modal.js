@@ -100,14 +100,9 @@ function updateSatwaLivePreview() {
   }
 }
 
-// Submit data satwa Kolom AL & Kolom AM ke Google Sheets
+// Submit data satwa Kolom AL & Kolom AM (Masuk ke Penampungan / Draft Staging)
 async function submitSatwaALAMUpdate(event) {
   event.preventDefault();
-
-  const btnSubmit = document.getElementById("btnSubmitSatwaALAM");
-  const originalHtml = btnSubmit.innerHTML;
-  btnSubmit.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Menyimpan ke Kolom AL & AM...`;
-  btnSubmit.disabled = true;
 
   const no = parseInt(document.getElementById("satwaTowerNo").value, 10);
   const towerName = document.getElementById("satwaTowerNamaHidden").value;
@@ -135,45 +130,39 @@ async function submitSatwaALAMUpdate(event) {
     catatan: catatan
   };
 
-  try {
-    // Kirim sinkronisasi ke Google Apps Script
-    await syncToGoogleSpreadsheet(payload);
+  const item = towerData.find(t => t.no === no);
+  const ultg = item ? item.ultg : "-";
+  const jalur = item ? item.jalur : "-";
 
-    // Perbarui data lokal di memori
-    const item = towerData.find(t => t.no === no);
-    if (item) {
-      item.binatang1 = b1;
-      item.binatang2 = b2;
-      item.kategori = kategori;
-      item.aktivitas = aktivitas;
-      item.catatan = catatan;
-
-      // Update kolomAP mirror jika satwa ada
-      if (kategori !== "(Blanks) / Tidak Ada") {
-        item.kolomAP = kategori;
-      } else {
-        item.kolomAP = "";
-      }
+  const changeObj = {
+    type: "satwa",
+    typeLabel: "Kerawanan Satwa (Kolom AL & AM)",
+    towerNo: no,
+    towerName: towerName,
+    ultg: ultg,
+    jalur: jalur,
+    payload: payload,
+    changesSummary: [
+      { label: "Binatang 1 (AL)", before: (item ? item.binatang1 : "-") || "-", after: b1 || "-" },
+      { label: "Binatang 2 (AM)", before: (item ? item.binatang2 : "-") || "-", after: b2 || "-" },
+      { label: "Kategori Satwa", before: (item ? item.kategori : "-") || "-", after: kategori },
+      { label: "Evaluasi Aktivitas", before: (item ? item.aktivitas : "-") || "-", after: aktivitas },
+      { label: "Catatan", before: (item ? item.catatan : "-") || "-", after: catatan }
+    ],
+    newData: {
+      binatang1: b1,
+      binatang2: b2,
+      kategori: kategori,
+      aktivitas: aktivitas,
+      catatan: catatan,
+      kolomAP: (kategori !== "(Blanks) / Tidak Ada" ? kategori : "")
     }
+  };
 
-    try {
-      localStorage.setItem("trs_plm_tower_data_v3", JSON.stringify(towerData));
-    } catch (e) {
-      console.warn("Gagal simpan ke cache:", e);
-    }
-
-    applyFilters();
-    renderTable();
-    if (typeof updateMetrics === "function") updateMetrics(filteredData);
-    closeModalSatwaALAM();
-    alert(`✅ Sukses! Data Satwa Kolom AL & AM untuk "${towerName}" (${kategori}) telah dikirim ke Google Sheets TRS_PLM.`);
-  } catch (err) {
-    console.error("Sinkronisasi gagal:", err);
-    alert("⚠️ Terjadi kendala sinkronisasi: " + err.message);
-  } finally {
-    btnSubmit.innerHTML = originalHtml;
-    btnSubmit.disabled = false;
+  if (typeof stagingManager !== "undefined") {
+    stagingManager.addPendingChange(changeObj);
   }
+  closeModalSatwaALAM();
 }
 
 
@@ -457,74 +446,69 @@ async function submitKolomEZUpdate(event) {
     togarAbesDate: getVal("ezTogarAbesDate")
   };
 
-  try {
-    // Sinkronisasi realtime ke Google Sheets
-    await syncToGoogleSpreadsheet(payload);
+  const item = towerData.find(t => t.no === no);
+  const ultg = item ? item.ultg : "-";
+  const jalur = item ? item.jalur : "-";
 
-    // Perbarui data lokal di memori
-    const item = towerData.find(t => t.no === no);
-    if (item) {
-      item.ezTopSkorL1 = payload.topSkorL1;
-      item.ezTopSkorL1Date = payload.topSkorL1Date;
-      item.ezTopSkorL2 = payload.topSkorL2;
-      item.ezTopSkorL2Date = payload.topSkorL2Date;
-      item.ezIronmanL1 = payload.ironmanL1;
-      item.ezIronmanL1Date = payload.ironmanL1Date;
-      item.ezIronmanL2 = payload.ironmanL2;
-      item.ezIronmanL2Date = payload.ironmanL2Date;
-      item.ezBoluves = payload.ezBoluves;
-      item.ezBoluvesDate = payload.boluvesDate;
-      item.ezJaring = payload.ezJaring;
-      item.ezJaringDate = payload.jaringDate;
-      item.ezPelakor = payload.ezPelakor;
-      item.ezPelakorDate = payload.pelakorDate;
-      item.ezKawatSilet = payload.ezKawatSilet;
-      item.ezKawatSiletDate = payload.kawatSiletDate;
-      item.ezAsb = payload.ezAsb;
-      item.ezAsbDate = payload.asbDate;
-      item.ezPemves = payload.ezPemves;
-      item.ezPemvesDate = payload.pemvesDate;
-      item.ezTogarAbes = payload.ezTogarAbes;
-      item.ezTogarAbesDate = payload.togarAbesDate;
+  // Hitung ulang Kolom AJ dan Status Proteksi
+  const activeDevices = [];
+  if (payload.topSkorL1 || payload.topSkorL2) activeDevices.push("TOP SKOR");
+  if (payload.ironmanL1 || payload.ironmanL2) activeDevices.push("IRONMAN");
+  if (payload.ezBoluves) activeDevices.push("BOLUVES");
+  if (payload.ezJaring) activeDevices.push("JARING");
+  if (payload.ezPelakor) activeDevices.push("PELAKOR");
+  if (payload.ezKawatSilet) activeDevices.push("KAWAT SILET");
+  if (payload.ezAsb) activeDevices.push("ASB");
+  if (payload.ezPemves) activeDevices.push("PEMVES");
+  if (payload.ezTogarAbes) activeDevices.push("TOGAR ABES");
 
-      // Hitung ulang Kolom AJ dan Status Proteksi
-      const activeDevices = [];
-      if (item.ezTopSkorL1 || item.ezTopSkorL2) activeDevices.push("TOP SKOR");
-      if (item.ezIronmanL1 || item.ezIronmanL2) activeDevices.push("IRONMAN");
-      if (item.ezBoluves) activeDevices.push("BOLUVES");
-      if (item.ezJaring) activeDevices.push("JARING");
-      if (item.ezPelakor) activeDevices.push("PELAKOR");
-      if (item.ezKawatSilet) activeDevices.push("KAWAT SILET");
-      if (item.ezAsb) activeDevices.push("ASB");
-      if (item.ezPemves) activeDevices.push("PEMVES");
-      if (item.ezTogarAbes) activeDevices.push("TOGAR ABES");
+  const newProteksi = activeDevices.length > 0 ? "TERPASANG" : "BELUM TERPASANG";
+  const newPerangkat = activeDevices.length > 0 ? activeDevices.join(", ") : "-";
 
-      if (activeDevices.length > 0) {
-        item.proteksi = "TERPASANG";
-        item.perangkat = activeDevices.join(", ");
-      } else {
-        item.proteksi = "BELUM TERPASANG";
-        item.perangkat = "-";
-      }
+  const changeObj = {
+    type: "manajemen",
+    typeLabel: "Manajemen Asset (Kolom E s.d. Z)",
+    towerNo: no,
+    towerName: towerName,
+    ultg: ultg,
+    jalur: jalur,
+    payload: payload,
+    changesSummary: [
+      { label: "Status Proteksi", before: (item ? item.proteksi : "BELUM TERPASANG"), after: newProteksi },
+      { label: "Perangkat Terpasang", before: (item ? item.perangkat : "-"), after: newPerangkat }
+    ],
+    newData: {
+      ezTopSkorL1: payload.topSkorL1,
+      ezTopSkorL1Date: payload.topSkorL1Date,
+      ezTopSkorL2: payload.topSkorL2,
+      ezTopSkorL2Date: payload.topSkorL2Date,
+      ezIronmanL1: payload.ironmanL1,
+      ezIronmanL1Date: payload.ironmanL1Date,
+      ezIronmanL2: payload.ironmanL2,
+      ezIronmanL2Date: payload.ironmanL2Date,
+      ezBoluves: payload.ezBoluves,
+      ezBoluvesDate: payload.boluvesDate,
+      ezJaring: payload.ezJaring,
+      ezJaringDate: payload.jaringDate,
+      ezPelakor: payload.ezPelakor,
+      ezPelakorDate: payload.pelakorDate,
+      ezKawatSilet: payload.ezKawatSilet,
+      ezKawatSiletDate: payload.kawatSiletDate,
+      ezAsb: payload.ezAsb,
+      ezAsbDate: payload.asbDate,
+      ezPemves: payload.ezPemves,
+      ezPemvesDate: payload.pemvesDate,
+      ezTogarAbes: payload.ezTogarAbes,
+      ezTogarAbesDate: payload.togarAbesDate,
+      proteksi: newProteksi,
+      perangkat: newPerangkat
     }
+  };
 
-    try {
-      localStorage.setItem("trs_plm_tower_data_v3", JSON.stringify(towerData));
-    } catch (e) {
-      console.warn("Gagal simpan ke cache:", e);
-    }
-
-    applyFilters();
-    renderTable();
-    closeModalKolomEZ();
-    alert(`✅ Sukses! Data Kolom E s.d. Z untuk "${towerName}" telah dikirim dan disinkronkan ke Google Sheets TRS_PLM.`);
-  } catch (err) {
-    console.error("Sinkronisasi gagal:", err);
-    alert("⚠️ Terjadi kendala sinkronisasi: " + err.message);
-  } finally {
-    btnSubmit.innerHTML = originalHtml;
-    btnSubmit.disabled = false;
+  if (typeof stagingManager !== "undefined") {
+    stagingManager.addPendingChange(changeObj);
   }
+  closeModalKolomEZ();
 }
 
 // Router cerdas: memanggil modal yang sesuai dengan tab aktif saat ini
