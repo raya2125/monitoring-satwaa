@@ -85,6 +85,9 @@ const stagingManager = (function() {
     const now = new Date();
     const timeFormatted = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 
+    // Ambil nama petugas/pengubah
+    const operatorName = (change.operatorName || "").trim() || localStorage.getItem("trs_operator_name") || "Teknisi Lapangan";
+
     // Ambil data menara untuk snapshot originalData
     const tower = typeof towerData !== "undefined" ? towerData.find(t => t.no === change.towerNo) : null;
     let originalData = {};
@@ -100,6 +103,7 @@ const stagingManager = (function() {
       towerName: change.towerName,
       ultg: change.ultg || "-",
       jalur: change.jalur || "-",
+      operatorName: operatorName,
       type: change.type, // "satwa" | "manajemen" | "tindak-lanjut"
       typeLabel: change.typeLabel,
       timestamp: now.toISOString(),
@@ -209,7 +213,13 @@ const stagingManager = (function() {
           </div>
 
           <!-- Actions -->
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <!-- Buka Halaman ACC Button -->
+            <button type="button" onclick="if(typeof switchTab==='function')switchTab('approval')" class="px-3.5 py-2 rounded-xl bg-sky-700/80 hover:bg-sky-600 text-white border border-sky-600/70 text-xs font-semibold flex items-center gap-1.5 transition" title="Buka Halaman Khusus Approval Admin">
+              <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-sky-200"></i>
+              <span>Halaman ACC</span>
+            </button>
+
             <!-- Review Diff Button -->
             <button type="button" onclick="stagingManager.openReviewModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
               <i data-lucide="eye" class="w-3.5 h-3.5 text-sky-400"></i>
@@ -437,6 +447,10 @@ const stagingManager = (function() {
     if (badgeCount) badgeCount.innerText = `${count} Perubahan`;
     if (reviewBadge) reviewBadge.innerText = `${count} Perubahan Ditampung`;
 
+    // Perbarui counter di tab header "Approval & ACC"
+    const elHeaderApproval = document.getElementById("headerCountApproval");
+    if (elHeaderApproval) elHeaderApproval.innerText = count;
+
     if (floatingBar) {
       if (count > 0) {
         floatingBar.classList.remove("hidden");
@@ -447,6 +461,11 @@ const stagingManager = (function() {
 
     // Perbarui status role visual
     updateRoleVisuals();
+
+    // Jika tab approval sedang aktif, render ulang halamannya
+    if (typeof renderApprovalPageView === "function" && typeof currentActiveTab !== "undefined" && currentActiveTab === "approval") {
+      renderApprovalPageView();
+    }
 
     if (window.lucide && typeof window.lucide.createIcons === "function") {
       window.lucide.createIcons();
@@ -556,8 +575,13 @@ const stagingManager = (function() {
                 <span class="font-extrabold text-slate-800 text-sm">${item.towerName}</span>
                 <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">${item.ultg}</span>
                 ${typeBadge}
+              <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <span>${item.jalur}</span>
+                <span>&bull;</span>
+                <span>Pengusul: <strong class="text-sky-700 font-semibold">${item.operatorName || "Teknisi Lapangan"}</strong></span>
+                <span>&bull;</span>
+                <span>${item.timeFormatted} WIB</span>
               </div>
-              <div class="text-[11px] text-slate-400 mt-0.5">${item.jalur} &bull; Dicatat pukul ${item.timeFormatted} WIB</div>
             </div>
 
             <!-- Single Reject Action -->
@@ -588,6 +612,54 @@ const stagingManager = (function() {
     if (window.lucide && typeof window.lucide.createIcons === "function") {
       window.lucide.createIcons();
     }
+  }
+
+  // Setujui satu perubahan saja (Satuan ACC)
+  async function approveSingleChange(changeId) {
+    if (currentRole !== "supervisor") {
+      toggleRoleModal(true);
+      return;
+    }
+
+    const change = pendingChanges.find(c => c.id === changeId);
+    if (!change) return;
+
+    if (!confirm(`Setujui (ACC) usulan perubahan untuk ${change.towerName} (${change.typeLabel}) oleh ${change.operatorName || "Petugas"} dan sinkronkan ke Google Sheets?`)) {
+      return;
+    }
+
+    // 1. Terapkan perubahan ke towerData
+    const item = typeof towerData !== "undefined" ? towerData.find(t => t.no === change.towerNo) : null;
+    if (item && change.newData) {
+      Object.assign(item, change.newData);
+    }
+
+    // 2. Kirim ke Google Apps Script
+    if (typeof syncToGoogleSpreadsheet === "function" && change.payload) {
+      try {
+        await syncToGoogleSpreadsheet(change.payload);
+      } catch (e) {
+        console.warn(`[SingleSync] Gagal kirim change #${change.id}:`, e);
+      }
+    }
+
+    // 3. Simpan ke cache
+    try {
+      localStorage.setItem("trs_plm_tower_data_v3", JSON.stringify(towerData));
+    } catch (e) {
+      console.warn("Gagal simpan ke localStorage:", e);
+    }
+
+    // 4. Hapus dari queue
+    pendingChanges = pendingChanges.filter(c => c.id !== changeId);
+    saveToStorage();
+    updateUI();
+
+    // 5. Refresh tables
+    refreshActiveTables();
+    if (typeof renderApprovalPageView === "function") renderApprovalPageView();
+
+    showToast(`✅ Perubahan ${change.towerName} oleh ${change.operatorName || "Petugas"} berhasil di-ACC!`, "success");
   }
 
   // Handler tombol Approve (Cek Akses Supervisor)
@@ -766,8 +838,10 @@ const stagingManager = (function() {
     init,
     hasPending,
     getPending,
+    getPendingList: () => pendingChanges,
     addPendingChange,
     removePendingChange,
+    approveSingleChange,
     clearAllPendingChanges,
     openReviewModal,
     closeReviewModal,
@@ -776,6 +850,13 @@ const stagingManager = (function() {
     closeRoleModal,
     submitRoleSwitch,
     getRole: () => currentRole,
+    setRole: (role) => {
+      currentRole = role;
+      saveToStorage();
+      updateUI();
+    },
+    getSupervisorPIN,
+    setSupervisorPIN,
     getPendingCount: () => pendingChanges.length
   };
 })();

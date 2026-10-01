@@ -54,6 +54,10 @@ function openModalSatwaALAM(no) {
   const elCat = document.getElementById("satwaCatatan");
   if (elCat) elCat.value = item.catatan !== "-" ? (item.catatan || "") : "";
 
+  // Nama Petugas Pengubah
+  const elOp = document.getElementById("satwaOperatorName");
+  if (elOp) elOp.value = localStorage.getItem("trs_operator_name") || "";
+
   // Pratinjau
   updateSatwaLivePreview();
 
@@ -134,9 +138,17 @@ async function submitSatwaALAMUpdate(event) {
   const ultg = item ? item.ultg : "-";
   const jalur = item ? item.jalur : "-";
 
+  // Simpan / Catat Nama Petugas Pengubah
+  const opInput = document.getElementById("satwaOperatorName");
+  const operatorName = (opInput ? opInput.value.trim() : "") || "Petugas Lapangan";
+  try {
+    localStorage.setItem("trs_operator_name", operatorName);
+  } catch (e) {}
+
   const changeObj = {
     type: "satwa",
     typeLabel: "Kerawanan Satwa (Kolom AL & AM)",
+    operatorName: operatorName,
     towerNo: no,
     towerName: towerName,
     ultg: ultg,
@@ -236,6 +248,10 @@ function openModalKolomEZ(no) {
 
   // 9. TOGAR ABES (Kolom Y, Z)
   setField("ezTogarAbes", "ezTogarAbesDate", item.ezTogarAbes, item.ezTogarAbesDate);
+
+  // Nama Petugas Pengubah
+  const elOp = document.getElementById("ezOperatorName");
+  if (elOp) elOp.value = localStorage.getItem("trs_operator_name") || "";
 
   // Perbarui preview ringkasan
   updateEZLivePreview();
@@ -465,9 +481,17 @@ async function submitKolomEZUpdate(event) {
   const newProteksi = activeDevices.length > 0 ? "TERPASANG" : "BELUM TERPASANG";
   const newPerangkat = activeDevices.length > 0 ? activeDevices.join(", ") : "-";
 
+  // Simpan / Catat Nama Petugas Pengubah
+  const opInput = document.getElementById("ezOperatorName");
+  const operatorName = (opInput ? opInput.value.trim() : "") || "Petugas Lapangan";
+  try {
+    localStorage.setItem("trs_operator_name", operatorName);
+  } catch (e) {}
+
   const changeObj = {
     type: "manajemen",
     typeLabel: "Manajemen Asset (Kolom E s.d. Z)",
+    operatorName: operatorName,
     towerNo: no,
     towerName: towerName,
     ultg: ultg,
@@ -508,6 +532,8 @@ async function submitKolomEZUpdate(event) {
   if (typeof stagingManager !== "undefined") {
     stagingManager.addPendingChange(changeObj);
   }
+  btnSubmit.innerHTML = originalHtml;
+  btnSubmit.disabled = false;
   closeModalKolomEZ();
 }
 

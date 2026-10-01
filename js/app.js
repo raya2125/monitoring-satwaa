@@ -14,7 +14,8 @@ function switchTab(tabId) {
     { id: "analitik", btnId: "navTabAnalitik" },
     { id: "manajemen", btnId: "navTabManajemen" },
     { id: "satwa", btnId: "navTabSatwa" },
-    { id: "tindak-lanjut", btnId: "navTabTindakLanjut" }
+    { id: "tindak-lanjut", btnId: "navTabTindakLanjut" },
+    { id: "approval", btnId: "navTabApproval" }
   ];
 
   // 1. Update styling tombol navigasi
@@ -50,6 +51,7 @@ function switchTab(tabId) {
   const elCatBtn = document.getElementById("categoryButtonsSection");
   const elTable = document.getElementById("tableSection");
   const elTindak = document.getElementById("viewTindakLanjut");
+  const elApproval = document.getElementById("viewApproval");
 
   if (elAnalitik) elAnalitik.classList.toggle("hidden", tabId !== "analitik");
   if (elKpi) elKpi.classList.toggle("hidden", tabId !== "manajemen");
@@ -57,6 +59,11 @@ function switchTab(tabId) {
   if (elCatBtn) elCatBtn.classList.toggle("hidden", tabId !== "satwa");
   if (elTable) elTable.classList.toggle("hidden", tabId !== "manajemen" && tabId !== "satwa");
   if (elTindak) elTindak.classList.toggle("hidden", tabId !== "tindak-lanjut");
+  if (elApproval) elApproval.classList.toggle("hidden", tabId !== "approval");
+
+  if (tabId === "approval" && typeof renderApprovalPageView === "function") {
+    renderApprovalPageView();
+  }
 
   // 4. Update data dan filter pada tampilan yang aktif
   if (typeof applyFilters === "function") {

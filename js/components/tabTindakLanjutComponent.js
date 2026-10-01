@@ -247,8 +247,24 @@ function renderTindakLanjutComponent() {
         <form id="formTindakLanjutAR_BA" onsubmit="submitTindakLanjutUpdate(event)" class="space-y-4">
           <input type="hidden" id="editTindakLanjutTowerNo">
 
+          <!-- NAMA PETUGAS / PENGUBAH -->
+          <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-1">
+            <label class="block text-[11px] font-bold text-amber-900 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-600"></i>
+                Nama Petugas / Pengubah <span class="text-rose-500">*</span>
+              </span>
+              <span class="text-[10px] text-amber-600 font-normal">Tercatat di Halaman ACC</span>
+            </label>
+            <input 
+              type="text" 
+              id="tindakLanjutOperatorName" 
+              placeholder="Contoh: Budi Santoso (Teknisi ULTG)"
+              required
+              class="w-full text-xs px-3 py-1.5 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white font-medium text-slate-800"
+            >
+          </div>
 
-          <div class="space-y-2 pt-1">
             <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center justify-between">
               <span class="flex items-center gap-1.5">
                 <i data-lucide="shield" class="w-4 h-4 text-sky-600"></i>
@@ -806,6 +822,12 @@ function openModalTindakLanjut(no) {
 
   document.getElementById("editTindakLanjutTowerNo").value = no;
 
+  // Nama Petugas Pengubah (dari cache localStorage jika ada)
+  const elOperator = document.getElementById("tindakLanjutOperatorName");
+  if (elOperator) {
+    elOperator.value = localStorage.getItem("trs_operator_name") || "";
+  }
+
   // Set Centang Form sesuai data menara
   document.getElementById("modalCheckBoluves").checked = Boolean(item.boluves);
   document.getElementById("modalCheckJaring").checked = Boolean(item.jaring);
@@ -867,6 +889,13 @@ async function submitTindakLanjutUpdate(event) {
 
   const newRekomendasi = activeDevs.length > 0 ? activeDevs.join(", ") : "-";
 
+  // Catat Nama Petugas / Pengubah
+  const opInput = document.getElementById("tindakLanjutOperatorName");
+  const operatorName = (opInput ? opInput.value.trim() : "") || "Petugas Lapangan";
+  try {
+    localStorage.setItem("trs_operator_name", operatorName);
+  } catch (e) {}
+
   const payload = {
     action: "updateTindakLanjut",
     nama: item.nama,
@@ -887,6 +916,7 @@ async function submitTindakLanjutUpdate(event) {
   const changeObj = {
     type: "tindak-lanjut",
     typeLabel: "Rencana Tindak Lanjut (Kolom AS s.d. BA)",
+    operatorName: operatorName,
     towerNo: no,
     towerName: item.nama,
     ultg: item.ultg,

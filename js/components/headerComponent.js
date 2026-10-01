@@ -66,6 +66,10 @@ function renderHeaderComponent() {
             <i data-lucide="wrench" class="w-4 h-4"></i>
             <span>Rencana Tindak Lanjut (<span id="headerCountTindakLanjut">108</span>)</span>
           </button>
+          <button id="navTabApproval" onclick="switchTab('approval')" class="py-3 px-1 text-slate-400 hover:text-slate-200 flex items-center gap-2 font-medium border-b-2 border-transparent transition">
+            <i data-lucide="check-check" class="w-4 h-4"></i>
+            <span>Approval & ACC (<span id="headerCountApproval">0</span>)</span>
+          </button>
         </nav>
       </div>
     </header>

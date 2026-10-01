@@ -45,6 +45,19 @@ function renderModalComponent() {
           <input type="hidden" id="satwaTowerNo">
           <input type="hidden" id="satwaTowerNamaHidden">
 
+          <!-- NAMA PETUGAS PENGUBAH -->
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <label class="block text-slate-700 font-bold text-[11px] flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-sky-600"></i>
+                Nama Petugas / Pengubah
+              </span>
+              <span class="text-[10px] text-slate-400 font-normal">Tercatat di Halaman ACC</span>
+            </label>
+            <input type="text" id="satwaOperatorName" placeholder="Nama Anda / Teknisi ULTG..." required
+                   class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-sky-500 text-slate-800 bg-white font-medium text-xs">
+          </div>
+
           <!-- KARTU INPUT KOLOM AL & KOLOM AM -->
           <div class="p-4 rounded-xl bg-sky-50/60 border border-sky-200/80 space-y-3">
             <div class="text-[11px] font-bold text-sky-900 flex items-center justify-between">
@@ -180,6 +193,19 @@ function renderModalComponent() {
         <form id="formKolomEZ" onsubmit="submitKolomEZUpdate(event)" class="overflow-y-auto pr-1 space-y-3.5 flex-1 text-xs">
           <input type="hidden" id="ezTowerNo">
           <input type="hidden" id="ezTowerNamaHidden">
+
+          <!-- NAMA PETUGAS PENGUBAH -->
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <label class="block text-slate-700 font-bold text-[11px] flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-emerald-600"></i>
+                Nama Petugas / Pengubah
+              </span>
+              <span class="text-[10px] text-slate-400 font-normal">Tercatat di Halaman ACC</span>
+            </label>
+            <input type="text" id="ezOperatorName" placeholder="Nama Anda / Teknisi ULTG..." required
+                   class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500 text-slate-800 bg-white font-medium text-xs">
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
 
