@@ -66,6 +66,115 @@ const stagingManager = (function() {
     return false;
   }
 
+  // Verifikasi PIN ke Google Apps Script (Server-Side) agar PIN tidak terbaca di inspect element
+  async function verifySupervisorPINOnline(enteredPin) {
+    const pin = (enteredPin || "").trim();
+    if (!pin) return false;
+
+    if (typeof SCRIPT_URL !== "undefined" && SCRIPT_URL) {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=verifyPin&pin=${encodeURIComponent(pin)}`);
+        const json = await res.json();
+        if (json && json.valid !== undefined) {
+          return Boolean(json.valid);
+        }
+      } catch (e) {
+        console.warn("[StagingManager] Gagal verifikasi online, menggunakan fallback lokal:", e);
+      }
+    }
+    // Fallback lokal jika offline
+    return pin === getSupervisorPIN();
+  }
+
+  // Kirim usulan perubahan ke Tab DRAFT_ANTREAN di Google Spreadsheet
+  function sendDraftToCloud(draftObj) {
+    if (typeof SCRIPT_URL === "undefined" || !SCRIPT_URL) return;
+    try {
+      const payload = {
+        action: "submitDraft",
+        id: draftObj.id,
+        operatorName: draftObj.operatorName,
+        towerName: draftObj.towerName,
+        jalur: draftObj.jalur,
+        ultg: draftObj.ultg,
+        typeLabel: draftObj.typeLabel,
+        changesSummary: draftObj.changesSummary,
+        payload: draftObj.payload
+      };
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.warn("[StagingManager] Gagal kirim draft ke Tab DRAFT_ANTREAN:", e);
+    }
+  }
+
+  // Tarik daftar draft yang masih PENDING dari Tab DRAFT_ANTREAN di Google Spreadsheet
+  async function fetchDraftsFromCloud(silent = false) {
+    if (typeof SCRIPT_URL === "undefined" || !SCRIPT_URL) return;
+    try {
+      if (!silent) showToast("Memeriksa antrean usulan di Google Spreadsheet...", "info");
+      const res = await fetch(`${SCRIPT_URL}?action=getDrafts&status=PENDING`);
+      const data = await res.json();
+
+      if (data && data.status === "success" && Array.isArray(data.drafts)) {
+        let newCount = 0;
+        data.drafts.forEach(d => {
+          const exists = pendingChanges.some(c => c.id === d.id || (c.towerName === d.towerName && c.typeLabel === d.typeLabel));
+          if (!exists) {
+            const matchedTower = typeof towerData !== "undefined" 
+              ? towerData.find(t => t.nama.trim().toLowerCase() === d.towerName.trim().toLowerCase()) 
+              : null;
+            
+            let inferredType = "manajemen";
+            if (d.typeLabel && d.typeLabel.toLowerCase().includes("satwa")) inferredType = "satwa";
+            else if (d.typeLabel && (d.typeLabel.toLowerCase().includes("rencana") || d.typeLabel.toLowerCase().includes("tindak"))) inferredType = "tindak-lanjut";
+
+            const changeItem = {
+              id: d.id,
+              towerNo: matchedTower ? matchedTower.no : 0,
+              towerName: d.towerName,
+              ultg: d.ultg || (matchedTower ? matchedTower.ultg : "-"),
+              jalur: d.jalur || (matchedTower ? matchedTower.jalur : "-"),
+              operatorName: d.operatorName || "Teknisi Lapangan",
+              type: inferredType,
+              typeLabel: d.typeLabel,
+              timestamp: d.timestamp,
+              timeFormatted: d.timestamp,
+              payload: d.payload,
+              changesSummary: typeof d.summary === "string" ? [{ label: "Detail", before: "-", after: d.summary }] : (d.changesSummary || []),
+              newData: (d.payload && d.payload.newData) ? d.payload.newData : {},
+              originalData: matchedTower ? { ...matchedTower } : {},
+              fromCloud: true
+            };
+
+            pendingChanges.push(changeItem);
+            newCount++;
+
+            if (matchedTower && changeItem.newData) {
+              Object.assign(matchedTower, changeItem.newData);
+            }
+          }
+        });
+
+        saveToStorage();
+        updateUI();
+        refreshActiveTables();
+        if (typeof renderApprovalPageView === "function") renderApprovalPageView();
+
+        if (!silent) {
+          showToast(`✅ Antrean Cloud diperbarui: ${data.drafts.length} usulan aktif di Spreadsheet.`, "success");
+        }
+      }
+    } catch (err) {
+      console.warn("[StagingManager] Gagal mengambil antrean dari cloud:", err);
+      if (!silent) showToast("Gagal terhubung ke Cloud Spreadsheet. Menggunakan antrean lokal.", "warning");
+    }
+  }
+
   // Cek apakah menara tertentu memiliki draft perubahan
   function hasPending(towerNo) {
     return pendingChanges.some(c => c.towerNo === towerNo);
@@ -131,8 +240,11 @@ const stagingManager = (function() {
     // Re-render tabel aktif agar badge penanda muncul
     refreshActiveTables();
 
+    // Kirim usulan perubahan ke Tab DRAFT_ANTREAN di Cloud Google Spreadsheet
+    sendDraftToCloud(newChangeObj);
+
     // Notifikasi Toast
-    showToast(`Draft ditampung: Menara ${change.towerName} (${change.typeLabel}). Menunggu ACC Supervisor.`, "info");
+    showToast(`Draft dicatat ke Tab DRAFT_ANTREAN Spreadsheet: Menara ${change.towerName} (${change.typeLabel}). Menunggu ACC Supervisor.`, "success");
   }
 
   // Hapus satu perubahan dari antrean & kembalikan ke data asli
@@ -150,7 +262,24 @@ const stagingManager = (function() {
     updateUI();
     refreshActiveTables();
     renderReviewModalList();
-    showToast("Perubahan dihapus dari antrean draft dan dikembalikan ke data awal.", "info");
+
+    // Beritahu Google Apps Script bahwa draft ditolak di cloud
+    if (typeof SCRIPT_URL !== "undefined" && SCRIPT_URL) {
+      try {
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "rejectDraft",
+            draftId: changeId,
+            supervisorName: localStorage.getItem("trs_operator_name") || "Supervisor"
+          })
+        });
+      } catch (e) {}
+    }
+
+    showToast("Perubahan dihapus dari antrean draft dan ditandai REJECTED di spreadsheet.", "info");
   }
 
   // Batalkan semua draft & kembalikan seluruh data ke kondisi awal
@@ -634,7 +763,25 @@ const stagingManager = (function() {
       Object.assign(item, change.newData);
     }
 
-    // 2. Kirim ke Google Apps Script
+    // 2. Beritahu Google Apps Script untuk menandai APPROVED di tab DRAFT_ANTREAN dan terapkan ke Tab Utama
+    if (typeof SCRIPT_URL !== "undefined" && SCRIPT_URL) {
+      try {
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "approveDraft",
+            draftId: change.id,
+            supervisorName: localStorage.getItem("trs_operator_name") || "Supervisor"
+          })
+        });
+      } catch (e) {
+        console.warn(`[SingleSync] Gagal tandai approve di cloud:`, e);
+      }
+    }
+
+    // Terapkan payload langsung ke sheet utama sebagai jaminan ganda
     if (typeof syncToGoogleSpreadsheet === "function" && change.payload) {
       try {
         await syncToGoogleSpreadsheet(change.payload);
@@ -659,7 +806,7 @@ const stagingManager = (function() {
     refreshActiveTables();
     if (typeof renderApprovalPageView === "function") renderApprovalPageView();
 
-    showToast(`✅ Perubahan ${change.towerName} oleh ${change.operatorName || "Petugas"} berhasil di-ACC!`, "success");
+    showToast(`✅ Sukses! Perubahan ${change.towerName} oleh ${change.operatorName || "Petugas"} berhasil di-ACC dan disinkronkan ke Spreadsheet!`, "success");
   }
 
   // Handler tombol Approve (Cek Akses Supervisor)
@@ -792,8 +939,8 @@ const stagingManager = (function() {
     }
   }
 
-  // Terapkan pergantian peran setelah verifikasi PIN
-  function submitRoleSwitch() {
+  // Terapkan pergantian peran setelah verifikasi PIN secara online
+  async function submitRoleSwitch() {
     const selected = document.querySelector("input[name='authRoleOption']:checked");
     if (!selected) return;
 
@@ -802,9 +949,15 @@ const stagingManager = (function() {
     if (role === "supervisor") {
       const pinInput = document.getElementById("inputSupervisorPIN");
       const enteredPin = (pinInput ? pinInput.value : "").trim();
-      const validPin = getSupervisorPIN();
 
-      if (enteredPin !== validPin) {
+      const btnSubmit = document.querySelector("#modalRoleAuth button[onclick*='submitRoleSwitch']");
+      const origText = btnSubmit ? btnSubmit.innerText : "";
+      if (btnSubmit) btnSubmit.innerText = "Memverifikasi...";
+
+      const isValid = await verifySupervisorPINOnline(enteredPin);
+      if (btnSubmit) btnSubmit.innerText = origText;
+
+      if (!isValid) {
         alert("⚠️ PIN Supervisor salah! Silakan coba lagi (Default PIN: 1234).");
         if (pinInput) pinInput.focus();
         return;
@@ -814,7 +967,10 @@ const stagingManager = (function() {
       saveToStorage();
       updateUI();
       closeRoleModal();
-      showToast("Akses Supervisor (ACC) telah diaktifkan!", "success");
+      showToast("👑 Akses Supervisor (ACC) telah diaktifkan!", "success");
+
+      // Otomatis tarik usulan cloud saat supervisor login
+      fetchDraftsFromCloud(true);
 
       // Jika ada perubahan draft, tanyakan apakah langsung ingin di-approve
       if (pendingChanges.length > 0) {
@@ -857,6 +1013,8 @@ const stagingManager = (function() {
     },
     getSupervisorPIN,
     setSupervisorPIN,
+    verifySupervisorPINOnline,
+    fetchDraftsFromCloud,
     getPendingCount: () => pendingChanges.length
   };
 })();

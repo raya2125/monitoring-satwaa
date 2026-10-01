@@ -162,11 +162,17 @@ function renderApprovalPageView() {
         </div>
 
         <!-- Global Batch Actions -->
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 shrink-0 flex-wrap">
+          <button type="button" onclick="stagingManager.fetchDraftsFromCloud(false)" 
+                  class="px-3 py-2 rounded-xl border border-sky-200 text-sky-700 bg-sky-50/60 hover:bg-sky-100 font-semibold transition flex items-center gap-1.5" title="Tarik usulan terbaru dari Tab DRAFT_ANTREAN Spreadsheet">
+            <i data-lucide="cloud-download" class="w-3.5 h-3.5 text-sky-600"></i>
+            <span>Tarik Antrean Cloud</span>
+          </button>
+
           <button type="button" onclick="stagingManager.clearAllPendingChanges()" ${countTotal === 0 ? 'disabled' : ''} 
                   class="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            <span>Tolak / Batalkan Semua</span>
+            <span>Tolak Semua</span>
           </button>
 
           <button type="button" onclick="stagingManager.handleApproveClick()" ${countTotal === 0 ? 'disabled' : ''} 
@@ -241,6 +247,10 @@ function renderPendingCardsHtml(list) {
               <span class="font-extrabold text-base text-slate-800">${item.towerName}</span>
               <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${item.ultg}</span>
               ${typeBadge}
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                <i data-lucide="cloud" class="w-3 h-3 text-amber-500"></i>
+                <span>Tab DRAFT_ANTREAN</span>
+              </span>
             </div>
             <div class="text-xs text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
               <span>Jalur: <strong class="text-slate-600">${item.jalur}</strong></span>
@@ -308,13 +318,25 @@ function onApprovalSearchInput(val) {
   renderApprovalPageView();
 }
 
-// Submit PIN auth dari halaman approval
-function submitPageSupervisorAuth() {
+// Submit PIN auth dari halaman approval secara online
+async function submitPageSupervisorAuth() {
   const pinInput = document.getElementById("inputPageSupervisorPIN");
   const enteredPin = (pinInput ? pinInput.value : "").trim();
-  const validPin = typeof stagingManager !== "undefined" ? stagingManager.getSupervisorPIN() : "1234";
 
-  if (enteredPin !== validPin) {
+  const btn = document.querySelector("#viewApproval button[onclick*='submitPageSupervisorAuth']");
+  const origText = btn ? btn.innerHTML : "";
+  if (btn) btn.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Memverifikasi PIN...`;
+
+  let isValid = false;
+  if (typeof stagingManager !== "undefined" && typeof stagingManager.verifySupervisorPINOnline === "function") {
+    isValid = await stagingManager.verifySupervisorPINOnline(enteredPin);
+  } else {
+    isValid = enteredPin === "1234";
+  }
+
+  if (btn) btn.innerHTML = origText;
+
+  if (!isValid) {
     alert("⚠️ PIN Supervisor salah! Silakan coba lagi (Default PIN: 1234).");
     if (pinInput) pinInput.focus();
     return;
@@ -322,6 +344,7 @@ function submitPageSupervisorAuth() {
 
   if (typeof stagingManager !== "undefined") {
     stagingManager.setRole("supervisor");
+    stagingManager.fetchDraftsFromCloud(true);
   }
   renderApprovalPageView();
 }

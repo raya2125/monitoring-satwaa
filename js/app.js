@@ -61,8 +61,14 @@ function switchTab(tabId) {
   if (elTindak) elTindak.classList.toggle("hidden", tabId !== "tindak-lanjut");
   if (elApproval) elApproval.classList.toggle("hidden", tabId !== "approval");
 
-  if (tabId === "approval" && typeof renderApprovalPageView === "function") {
-    renderApprovalPageView();
+  if (tabId === "approval") {
+    if (typeof renderApprovalPageView === "function") {
+      renderApprovalPageView();
+    }
+    // Otomatis tarik usulan cloud dari Tab DRAFT_ANTREAN Spreadsheet
+    if (typeof stagingManager !== "undefined" && typeof stagingManager.fetchDraftsFromCloud === "function") {
+      stagingManager.fetchDraftsFromCloud(true);
+    }
   }
 
   // 4. Update data dan filter pada tampilan yang aktif
@@ -111,6 +117,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();
+      }
+
+      // Ambil antrean usulan yang masih PENDING dari Tab DRAFT_ANTREAN di Spreadsheet
+      if (typeof stagingManager !== "undefined" && typeof stagingManager.fetchDraftsFromCloud === "function") {
+        stagingManager.fetchDraftsFromCloud(true);
       }
     });
   }
