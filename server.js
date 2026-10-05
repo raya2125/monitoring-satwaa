@@ -172,8 +172,8 @@ const server = http.createServer(async (req, res) => {
   // API ROUTER: MONGODB AUTHENTICATION & AUDIT TRAIL
   // =========================================================================
 
-  // 1. GET /api/auth/status - Cek status koneksi MongoDB
-  if (req.method === 'GET' && parsedUrl === '/api/auth/status') {
+  // 1. GET /api/status & /api/auth/status
+  if (req.method === 'GET' && (parsedUrl === '/api/status' || parsedUrl === '/api/auth/status')) {
     return sendJson(res, 200, {
       status: 'ok',
       mongoConnected: isMongoConnected,
@@ -183,8 +183,8 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  // 2. POST /api/auth/verify-pin - Verifikasi PIN Supervisor via MongoDB
-  if (req.method === 'POST' && parsedUrl === '/api/auth/verify-pin') {
+  // 2. POST /api/verify-pin & /api/auth/verify-pin
+  if (req.method === 'POST' && (parsedUrl === '/api/verify-pin' || parsedUrl === '/api/auth/verify-pin')) {
     const body = await parseJsonBody(req);
     const enteredPin = String(body.pin || '').trim();
 
@@ -258,8 +258,8 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  // 3. POST /api/auth/change-pin - Ubah PIN Supervisor di MongoDB
-  if (req.method === 'POST' && parsedUrl === '/api/auth/change-pin') {
+  // 3. POST /api/change-pin & /api/auth/change-pin
+  if (req.method === 'POST' && (parsedUrl === '/api/change-pin' || parsedUrl === '/api/auth/change-pin')) {
     const body = await parseJsonBody(req);
     const oldPin = String(body.oldPin || '').trim();
     const newPin = String(body.newPin || '').trim();
@@ -305,8 +305,8 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { success: true, message: 'MongoDB tidak aktif, ubah PIN di .env.' });
   }
 
-  // 4. POST /api/auth/log-acc - Catat Jejak Rekam Aksi ACC ke MongoDB
-  if (req.method === 'POST' && parsedUrl === '/api/auth/log-acc') {
+  // 4. POST /api/log-acc & /api/auth/log-acc
+  if (req.method === 'POST' && (parsedUrl === '/api/log-acc' || parsedUrl === '/api/auth/log-acc')) {
     const body = await parseJsonBody(req);
     if (isMongoConnected && colAuditLogs) {
       try {
@@ -326,8 +326,8 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { success: true });
   }
 
-  // 5. GET /api/auth/audit-logs - Ambil 50 Riwayat ACC dari MongoDB
-  if (req.method === 'GET' && parsedUrl === '/api/auth/audit-logs') {
+  // 5. GET /api/audit-logs & /api/auth/audit-logs
+  if (req.method === 'GET' && (parsedUrl === '/api/audit-logs' || parsedUrl === '/api/auth/audit-logs')) {
     if (isMongoConnected && colAuditLogs) {
       try {
         const logs = await colAuditLogs.find({}).sort({ timestamp: -1 }).limit(50).toArray();
@@ -348,6 +348,23 @@ const server = http.createServer(async (req, res) => {
   }
 
   const safePath = path.normalize(reqUrl).replace(/^(\.\.[\/\\])+/, '');
+
+  // Blokir akses ke file rahasia (.env, .git, node_modules, package.json, dsb)
+  const lowerPath = safePath.toLowerCase();
+  if (
+    safePath.startsWith('.') || 
+    safePath.includes('/.') || 
+    safePath.includes('\\.') || 
+    lowerPath.includes('.env') || 
+    lowerPath.includes('package.json') || 
+    lowerPath.startsWith('node_modules') || 
+    lowerPath.endsWith('.bat')
+  ) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('403 Forbidden: Akses ke file konfigurasi atau sistem diblokir.');
+    return;
+  }
+
   const filePath = path.join(BASE_DIR, safePath);
 
   fs.stat(filePath, (err, stats) => {

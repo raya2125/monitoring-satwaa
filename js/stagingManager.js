@@ -69,8 +69,8 @@ const stagingManager = (function() {
   // Helper pencatatan jejak audit ACC ke MongoDB
   function logAccToMongoDB(change) {
     try {
-      const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.hostname === "localhost" ? window.location.origin : "http://localhost:8080");
-      fetch(`${apiUrl}/api/auth/log-acc`, {
+      const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.origin || "http://localhost:8080");
+      fetch(`${apiUrl}/api/log-acc`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,8 +93,8 @@ const stagingManager = (function() {
 
     // 1. Prioritas Utama: Verifikasi ke Backend Auth MongoDB (Terenkripsi Bcrypt)
     try {
-      const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.hostname === "localhost" ? window.location.origin : "http://localhost:8080");
-      const res = await fetch(`${apiUrl}/api/auth/verify-pin`, {
+      const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.origin || "http://localhost:8080");
+      const res = await fetch(`${apiUrl}/api/verify-pin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin: pin })
