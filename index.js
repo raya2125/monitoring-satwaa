@@ -47,16 +47,16 @@ try {
   MongoClient = mongoPkg.MongoClient;
 } catch (e) {}
 
-// State Koneksi MongoDB
-let dbClient = null;
-let db = null;
-let colSupervisors = null;
-let colAuditLogs = null;
-let isMongoConnected = false;
+let lastMongoError = null;
 
 async function initMongo() {
   if (isMongoConnected && db) return true;
-  if (!MongoClient || !MONGO_URI || MONGO_URI.trim() === '') {
+  if (!MongoClient) {
+    lastMongoError = 'MongoClient not loaded';
+    return false;
+  }
+  if (!MONGO_URI || MONGO_URI.trim() === '') {
+    lastMongoError = 'MONGO_URI is empty or undefined';
     return false;
   }
 
@@ -73,6 +73,7 @@ async function initMongo() {
     colSupervisors = db.collection('supervisors');
     colAuditLogs = db.collection('audit_logs');
     isMongoConnected = true;
+    lastMongoError = null;
 
     // Seed supervisor awal jika koleksi masih kosong
     const count = await colSupervisors.countDocuments();
@@ -89,6 +90,7 @@ async function initMongo() {
     }
     return true;
   } catch (err) {
+    lastMongoError = err.message;
     console.error('[MongoDB Error]', err.message);
     isMongoConnected = false;
     return false;
@@ -215,7 +217,9 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, {
       status: 'online',
       serverTime: new Date().toISOString(),
+      mongoUriSet: Boolean(process.env.MONGO_URI && process.env.MONGO_URI.trim() !== ''),
       mongoConnected: isMongoConnected,
+      mongoError: lastMongoError,
       database: isMongoConnected ? 'MongoDB Cloud Atlas' : 'Local Fallback Mode',
       cwd: process.cwd(),
       cwdFiles: cwdFiles,
