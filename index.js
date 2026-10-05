@@ -137,11 +137,13 @@ const MIME_TYPES = {
 
 // Helper pencari file statis (kompatibel Vercel Lambda & Local)
 function findStaticFile(safePath) {
+  const cleanPath = String(safePath || '').replace(/^[\/\\]+/, '');
   const candidates = [
-    path.join(__dirname, safePath),
-    path.join(process.cwd(), safePath),
-    path.join(__dirname, '..', safePath),
-    path.join(process.cwd(), 'public', safePath)
+    path.join(__dirname, cleanPath),
+    path.join(process.cwd(), cleanPath),
+    path.resolve(cleanPath),
+    path.join(__dirname, '..', cleanPath),
+    path.join('/var/task', cleanPath)
   ];
   for (const candidate of candidates) {
     try {
