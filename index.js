@@ -208,12 +208,19 @@ const server = http.createServer(async (req, res) => {
   // 1. GET /api/status
   if (pathname === '/api/status') {
     await initMongo().catch(() => {});
+    let cwdFiles = [];
+    let dirnameFiles = [];
+    try { cwdFiles = fs.readdirSync(process.cwd()); } catch(e) { cwdFiles = [e.message]; }
+    try { dirnameFiles = fs.readdirSync(__dirname); } catch(e) { dirnameFiles = [e.message]; }
     return sendJson(res, 200, {
       status: 'online',
       serverTime: new Date().toISOString(),
       mongoConnected: isMongoConnected,
       database: isMongoConnected ? 'MongoDB Cloud Atlas' : 'Local Fallback Mode',
-      uptime: process.uptime()
+      cwd: process.cwd(),
+      cwdFiles: cwdFiles,
+      dirname: __dirname,
+      dirnameFiles: dirnameFiles
     });
   }
 
