@@ -47,6 +47,12 @@ try {
   MongoClient = mongoPkg.MongoClient;
 } catch (e) {}
 
+// State Koneksi MongoDB
+let dbClient = null;
+let db = null;
+let colSupervisors = null;
+let colAuditLogs = null;
+let isMongoConnected = false;
 let lastMongoError = null;
 
 async function initMongo() {
