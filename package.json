@@ -2,9 +2,8 @@
   "name": "monitoring-satwa-sutt",
   "version": "1.0.0",
   "description": "Sistem Monitoring Kerawanan Satwa & Proteksi SUTT/SUTET PLN UPT Palembang with MongoDB Auth",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node local-server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
