@@ -16,5 +16,5 @@ start "" "http://localhost:8080/"
 echo.
 echo Server berjalan di http://localhost:8080/. Tekan Ctrl+C untuk menghentikan.
 echo.
-node local-server.js
+node index.js
 pause
