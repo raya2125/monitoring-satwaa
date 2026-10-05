@@ -1,5 +1,7 @@
-# Node modules (jika ada instalasi lokal)
+# Node modules & Environment
 node_modules/
+.env
+.env.local
 
 # OS generated files
 .DS_Store

@@ -66,11 +66,55 @@ const stagingManager = (function() {
     return false;
   }
 
-  // Verifikasi PIN ke Google Apps Script (Server-Side) agar PIN tidak terbaca di inspect element
+  // Helper pencatatan jejak audit ACC ke MongoDB
+  function logAccToMongoDB(change) {
+    try {
+      const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.hostname === "localhost" ? window.location.origin : "http://localhost:8080");
+      fetch(`${apiUrl}/api/auth/log-acc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          towerName: change.towerName,
+          jalur: change.jalur,
+          ultg: change.ultg,
+          operatorName: change.operatorName,
+          supervisorName: localStorage.getItem("trs_operator_name") || "Supervisor",
+          typeLabel: change.typeLabel,
+          changesSummary: change.changesSummary
+        })
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
+  // Verifikasi PIN ke MongoDB Backend (Bcrypt Hashed) dengan Fallback Google Apps Script
   async function verifySupervisorPINOnline(enteredPin) {
     const pin = (enteredPin || "").trim();
     if (!pin) return false;
 
+    // 1. Prioritas Utama: Verifikasi ke Backend Auth MongoDB (Terenkripsi Bcrypt)
+    try {
+      const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.hostname === "localhost" ? window.location.origin : "http://localhost:8080");
+      const res = await fetch(`${apiUrl}/api/auth/verify-pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data) {
+        if (data.success === true) {
+          if (data.source === "mongodb") {
+            console.log("🔐 Terverifikasi via Database MongoDB Atlas!");
+          }
+          return true;
+        } else if (data.success === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Server lokal/MongoDB offline, gunakan fallback Google Apps Script
+    }
+
+    // 2. Fallback Cadangan: Verifikasi ke Google Apps Script (Server-Side Cloud)
     if (typeof SCRIPT_URL !== "undefined" && SCRIPT_URL) {
       try {
         const res = await fetch(`${SCRIPT_URL}?action=verifyPin&pin=${encodeURIComponent(pin)}`);
@@ -82,7 +126,8 @@ const stagingManager = (function() {
         console.warn("[StagingManager] Gagal verifikasi online, menggunakan fallback lokal:", e);
       }
     }
-    // Fallback lokal jika offline
+
+    // 3. Fallback Darurat: Komparasi lokal jika offline total
     return pin === getSupervisorPIN();
   }
 
@@ -796,6 +841,9 @@ const stagingManager = (function() {
     } catch (e) {
       console.warn("Gagal simpan ke localStorage:", e);
     }
+
+    // Catat log audit ACC ke MongoDB
+    logAccToMongoDB(change);
 
     // 4. Hapus dari queue
     pendingChanges = pendingChanges.filter(c => c.id !== changeId);

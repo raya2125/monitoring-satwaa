@@ -52,8 +52,9 @@ function renderApprovalPageView() {
           <span>Buka Akses Supervisor (ACC)</span>
         </button>
 
-        <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-          Saat ini Anda dalam mode <span class="font-semibold text-slate-600">Operator (Input Data)</span>.
+        <div class="text-[11px] text-slate-500 pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-sky-600"></i>
+          <span>Autentikasi diamankan oleh <strong>MongoDB Server (Bcrypt)</strong></span>
         </div>
       </div>
     `;
@@ -100,8 +101,13 @@ function renderApprovalPageView() {
                 <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">
                   Pusat Persetujuan & Verifikasi Data (Halaman ACC)
                 </h1>
-                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  👑 Akses Supervisor Aktif
+                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                  <span>👑 Akses Supervisor Aktif</span>
+                </span>
+                <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-sky-500/20 text-sky-200 border border-sky-500/30 flex items-center gap-1" title="PIN diverifikasi via MongoDB Backend">
+                  <i data-lucide="database" class="w-3 h-3 text-sky-400"></i>
+                  <span>MongoDB Auth</span>
                 </span>
               </div>
               <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">

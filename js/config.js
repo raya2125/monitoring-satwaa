@@ -9,6 +9,11 @@ const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1IMpg20-ciVp
 // URL Web App Google Apps Script Aktif (untuk POST/Write-Back update data)
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQuri-Iq_8cMUUGYhlWf0RrvN549rgCKYyYj_Gw2kajLLN9OyjeWRLyvLRXUVKcKeu/exec";
 
+// URL Endpoint Backend MongoDB Auth & Audit Trail
+const AUTH_API_URL = (typeof window !== "undefined" && window.location.hostname === "localhost") 
+  ? window.location.origin 
+  : "http://localhost:8080";
+
 // Target total aset menara sesuai database TRS_PLM (Real dari spreadsheet)
 const TARGET_COUNT = 3202;
 
