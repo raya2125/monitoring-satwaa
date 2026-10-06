@@ -184,63 +184,71 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 2. POST /api/verify-pin & /api/auth/verify-pin
-  if (req.method === 'POST' && (parsedUrl === '/api/verify-pin' || parsedUrl === '/api/auth/verify-pin')) {
+  if (req.method === 'POST' && (parsedUrl === '/api/verify-pin' || parsedUrl === '/api/auth/verify-pin' || parsedUrl === '/api/auth/login')) {
     const body = await parseJsonBody(req);
-    const enteredPin = String(body.pin || '').trim();
+    const enteredPin = String(body.pin || body.password || '').trim();
+    const username = String(body.username || '').trim().toLowerCase();
 
     if (!enteredPin) {
-      return sendJson(res, 400, { success: false, message: 'PIN diperlukan.' });
+      return sendJson(res, 400, { success: false, valid: false, message: 'Password atau PIN diperlukan.' });
     }
 
     if (isMongoConnected && colSupervisors) {
       try {
-        const supervisor = await colSupervisors.findOne({ role: 'supervisor' });
-        if (!supervisor) {
-          return sendJson(res, 404, { success: false, message: 'Data akun supervisor belum dibuat di MongoDB.' });
-        }
+        const query = username 
+          ? { $or: [{ username: username }, { username: new RegExp('^' + username + '$', 'i') }, { role: 'supervisor' }] }
+          : { role: 'supervisor' };
 
-        // Bandingkan PIN dengan hash bcrypt di MongoDB
-        let isMatch = false;
-        if (bcrypt && supervisor.pinHash && supervisor.pinHash.startsWith('$2')) {
-          isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
-        } else {
-          isMatch = enteredPin === supervisor.pinHash || enteredPin === DEFAULT_PIN;
-        }
+        const supervisor = await colSupervisors.findOne(query);
+        if (supervisor) {
+          // Bandingkan PIN dengan hash bcrypt di MongoDB
+          let isMatch = false;
+          if (bcrypt && supervisor.pinHash && supervisor.pinHash.startsWith('$2')) {
+            isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
+          } else {
+            isMatch = enteredPin === supervisor.pinHash || enteredPin === DEFAULT_PIN;
+          }
 
-        if (isMatch) {
-          // Buat token sesi aman
-          const sessionToken = 'PLN_AUTH_' + Date.now() + '_' + crypto.randomBytes(12).toString('hex');
-          
-          // Catat audit log login sukses ke MongoDB
-          if (colAuditLogs) {
-            colAuditLogs.insertOne({
-              action: 'LOGIN_SUPERVISOR_SUCCESS',
+          if (isMatch) {
+            // Buat token sesi aman
+            const sessionToken = 'PLN_AUTH_' + Date.now() + '_' + crypto.randomBytes(12).toString('hex');
+            
+            // Catat audit log login sukses ke MongoDB
+            if (colAuditLogs) {
+              colAuditLogs.insertOne({
+                action: 'LOGIN_SUPERVISOR_SUCCESS',
+                username: supervisor.username || username || 'supervisor',
+                name: supervisor.name,
+                ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
+                timestamp: new Date()
+              }).catch(() => {});
+            }
+
+            return sendJson(res, 200, {
+              success: true,
+              valid: true,
+              role: 'supervisor',
+              username: supervisor.username || username || 'supervisor',
               name: supervisor.name,
-              ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
-              timestamp: new Date()
-            }).catch(() => {});
-          }
+              token: sessionToken,
+              source: 'mongodb'
+            });
+          } else {
+            if (colAuditLogs) {
+              colAuditLogs.insertOne({
+                action: 'LOGIN_SUPERVISOR_FAILED',
+                username: username || 'unknown',
+                ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
+                timestamp: new Date()
+              }).catch(() => {});
+            }
 
-          return sendJson(res, 200, {
-            success: true,
-            role: 'supervisor',
-            name: supervisor.name,
-            token: sessionToken,
-            source: 'mongodb'
-          });
-        } else {
-          if (colAuditLogs) {
-            colAuditLogs.insertOne({
-              action: 'LOGIN_SUPERVISOR_FAILED',
-              ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
-              timestamp: new Date()
-            }).catch(() => {});
+            return sendJson(res, 401, {
+              success: false,
+              valid: false,
+              message: 'Username atau Password/PIN Supervisor salah.'
+            });
           }
-
-          return sendJson(res, 401, {
-            success: false,
-            message: 'PIN Supervisor tidak sesuai dengan database MongoDB.'
-          });
         }
       } catch (dbErr) {
         console.error('Error verifikasi MongoDB:', dbErr);
@@ -248,10 +256,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Fallback jika MongoDB belum terhubung: bandingkan dengan DEFAULT_PIN
-    const isValidFallback = enteredPin === DEFAULT_PIN;
+    const isValidFallback = (enteredPin === DEFAULT_PIN) && (!username || username === 'supervisor' || username === 'admin');
     return sendJson(res, isValidFallback ? 200 : 401, {
       success: isValidFallback,
+      valid: isValidFallback,
       role: isValidFallback ? 'supervisor' : 'operator',
+      username: username || 'supervisor',
       name: 'Supervisor (Mode Fallback)',
       source: 'fallback',
       message: isValidFallback ? 'Sukses login via fallback' : 'PIN salah'

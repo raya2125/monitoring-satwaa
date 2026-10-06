@@ -35,13 +35,14 @@ const stagingManager = (function() {
       if (savedChanges) {
         pendingChanges = JSON.parse(savedChanges);
       }
+      const isRemembered = localStorage.getItem(STORAGE_KEY_ADMIN_REMEMBER) === "true";
+      const sessionRole = (typeof sessionStorage !== "undefined") ? sessionStorage.getItem("trs_session_role") : null;
       const savedRole = localStorage.getItem(STORAGE_KEY_ROLE);
-      const isRemembered = localStorage.getItem(STORAGE_KEY_ADMIN_REMEMBER);
 
-      // Jika admin sudah pernah login dan diingat, otomatis pulihkan akses supervisor
-      if (savedRole === "supervisor" || isRemembered === "true") {
+      // Jika Remember Me aktif (disimpan di localStorage) ATAU masih dalam sesi browser aktif
+      if (isRemembered || sessionRole === "supervisor" || (savedRole === "supervisor" && localStorage.getItem(STORAGE_KEY_ADMIN_REMEMBER) !== "false")) {
         currentRole = "supervisor";
-      } else if (savedRole === "operator") {
+      } else {
         currentRole = "operator";
       }
     } catch (e) {
@@ -55,12 +56,33 @@ const stagingManager = (function() {
     try {
       localStorage.setItem(STORAGE_KEY_CHANGES, JSON.stringify(pendingChanges));
       localStorage.setItem(STORAGE_KEY_ROLE, currentRole);
-      if (currentRole === "supervisor") {
-        localStorage.setItem(STORAGE_KEY_ADMIN_REMEMBER, "true");
-      }
     } catch (e) {
       console.warn("[StagingManager] Gagal menyimpan data ke storage:", e);
     }
+  }
+
+  // Set sesi supervisor lengkap dengan username dan opsi Remember Me
+  function setSupervisorSession(username = "supervisor", shouldRemember = true) {
+    currentRole = "supervisor";
+    try {
+      localStorage.setItem(STORAGE_KEY_ROLE, "supervisor");
+      localStorage.setItem("trs_supervisor_username", username);
+      localStorage.setItem("trs_saved_username", username);
+      localStorage.setItem("trs_operator_name", `Supervisor (${username})`);
+      localStorage.setItem("trs_supervisor_auth_time", new Date().toISOString());
+
+      if (shouldRemember) {
+        localStorage.setItem(STORAGE_KEY_ADMIN_REMEMBER, "true");
+      } else {
+        localStorage.removeItem(STORAGE_KEY_ADMIN_REMEMBER);
+      }
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem("trs_session_role", "supervisor");
+      }
+    } catch (e) {}
+
+    saveToStorage();
+    updateUI();
   }
 
   function getSupervisorPIN() {
@@ -95,9 +117,10 @@ const stagingManager = (function() {
     } catch (e) {}
   }
 
-  // Verifikasi PIN ke MongoDB Backend (Bcrypt Hashed) dengan Fallback Google Apps Script
-  async function verifySupervisorPINOnline(enteredPin) {
+  // Verifikasi Kredensial Login (Username & PIN/Password) ke Backend MongoDB / Cloud
+  async function verifySupervisorPINOnline(enteredPin, enteredUsername = "supervisor") {
     const pin = (enteredPin || "").trim();
+    const username = (enteredUsername || "supervisor").trim();
     if (!pin) return false;
 
     // 1. Prioritas Utama: Verifikasi ke Backend Auth MongoDB (Terenkripsi Bcrypt)
@@ -106,16 +129,26 @@ const stagingManager = (function() {
       const res = await fetch(`${apiUrl}/api/verify-pin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: pin })
+        body: JSON.stringify({
+          username: username,
+          pin: pin,
+          password: pin
+        })
       });
       const data = await res.json();
       if (data) {
-        if (data.success === true) {
-          if (data.source === "mongodb") {
+        if (data.success === true || data.valid === true) {
+          if (data.source === "mongodb" || data.authSource === "mongodb") {
             console.log("🔐 Terverifikasi via Database MongoDB Atlas!");
           }
-          return true;
-        } else if (data.success === false) {
+          return {
+            valid: true,
+            success: true,
+            role: "supervisor",
+            username: data.username || username,
+            name: data.name || "Supervisor UPT"
+          };
+        } else if (data.success === false || data.valid === false) {
           return false;
         }
       }
@@ -126,10 +159,20 @@ const stagingManager = (function() {
     // 2. Fallback Cadangan: Verifikasi ke Google Apps Script (Server-Side Cloud)
     if (typeof SCRIPT_URL !== "undefined" && SCRIPT_URL) {
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=verifyPin&pin=${encodeURIComponent(pin)}`);
+        const res = await fetch(`${SCRIPT_URL}?action=verifyPin&pin=${encodeURIComponent(pin)}&username=${encodeURIComponent(username)}`);
         const json = await res.json();
-        if (json && json.valid !== undefined) {
-          return Boolean(json.valid);
+        if (json && (json.valid !== undefined || json.success !== undefined)) {
+          const isValid = Boolean(json.valid || json.success);
+          if (isValid) {
+            return {
+              valid: true,
+              success: true,
+              role: "supervisor",
+              username: username,
+              name: "Supervisor UPT"
+            };
+          }
+          return false;
         }
       } catch (e) {
         console.warn("[StagingManager] Gagal verifikasi online, menggunakan fallback lokal:", e);
@@ -137,7 +180,18 @@ const stagingManager = (function() {
     }
 
     // 3. Fallback Darurat: Komparasi lokal jika offline total
-    return pin === getSupervisorPIN();
+    const isPinMatch = (pin === getSupervisorPIN());
+    const isUserMatch = !username || username.toLowerCase() === "supervisor" || username.toLowerCase() === "admin";
+    if (isPinMatch && isUserMatch) {
+      return {
+        valid: true,
+        success: true,
+        role: "supervisor",
+        username: username || "supervisor",
+        name: "Supervisor (Offline Mode)"
+      };
+    }
+    return false;
   }
 
   // Kirim usulan perubahan ke Tab DRAFT_ANTREAN di Google Spreadsheet
@@ -520,11 +574,21 @@ const stagingManager = (function() {
               </div>
             </label>
 
-            <!-- PIN Input (hanya aktif jika Supervisor dipilih) -->
-            <div id="pinInputContainer" class="hidden space-y-1.5 pt-2">
-              <label class="block font-semibold text-slate-700">Masukkan PIN Supervisor:</label>
-              <input type="password" id="inputSupervisorPIN" placeholder="Default: 1234" maxlength="10" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono text-center tracking-widest text-sm bg-slate-50 focus:bg-white">
-              <div class="text-[10px] text-slate-400 italic text-center">Petunjuk: PIN default adalah <strong>1234</strong></div>
+            <!-- Kredensial Login Supervisor (Aktif saat Supervisor dipilih) -->
+            <div id="pinInputContainer" class="hidden space-y-2.5 pt-2 border-t border-slate-100">
+              <div class="space-y-1">
+                <label for="inputSupervisorUsername" class="block font-semibold text-slate-700 text-xs">Username:</label>
+                <input type="text" id="inputSupervisorUsername" placeholder="Username (supervisor atau admin)" value="supervisor" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 text-xs bg-slate-50 focus:bg-white font-medium text-slate-800">
+              </div>
+              <div class="space-y-1">
+                <label for="inputSupervisorPIN" class="block font-semibold text-slate-700 text-xs">Password / PIN Supervisor:</label>
+                <input type="password" id="inputSupervisorPIN" placeholder="Default: 1234" onkeydown="if(event.key==='Enter')stagingManager.submitRoleSwitch()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono text-center tracking-widest text-sm bg-slate-50 focus:bg-white">
+              </div>
+              <div class="flex items-center gap-2 pt-1 text-slate-600">
+                <input type="checkbox" id="checkboxRememberRoleAuth" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer">
+                <label for="checkboxRememberRoleAuth" class="text-[11px] select-none cursor-pointer">Ingat saya di perangkat ini (Remember Me)</label>
+              </div>
+              <div class="text-[10px] text-slate-400 italic text-center">Petunjuk: Kredensial default: <strong>supervisor</strong> / PIN: <strong>1234</strong></div>
             </div>
           </div>
 
@@ -665,9 +729,10 @@ const stagingManager = (function() {
     const labelModalApprove = document.getElementById("labelModalApprove");
 
     const isSupervisor = currentRole === "supervisor";
+    const savedUser = (typeof localStorage !== "undefined" && localStorage.getItem("trs_supervisor_username")) || "Supervisor";
 
     if (roleBadgeHeader) {
-      roleBadgeHeader.innerText = isSupervisor ? "👑 Supervisor (ACC)" : "👷 Operator (Input)";
+      roleBadgeHeader.innerText = isSupervisor ? `👑 ${savedUser} (ACC)` : "👷 Operator (Input)";
     }
 
     if (btnHeaderSwitcher) {
@@ -685,7 +750,7 @@ const stagingManager = (function() {
     if (roleBadgeReview) {
       if (isSupervisor) {
         roleBadgeReview.className = "font-bold px-2.5 py-0.5 rounded-md text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-200";
-        roleBadgeReview.innerHTML = `👑 Supervisor (Akses ACC Aktif)`;
+        roleBadgeReview.innerHTML = `👑 ${savedUser} (Akses ACC Aktif)`;
       } else {
         roleBadgeReview.className = "font-bold px-2.5 py-0.5 rounded-md text-[11px] bg-slate-200 text-slate-700 border border-slate-300";
         roleBadgeReview.innerHTML = `👷 Operator (Akses Input Data)`;
@@ -711,6 +776,10 @@ const stagingManager = (function() {
       localStorage.setItem(STORAGE_KEY_ROLE, "operator");
       localStorage.removeItem(STORAGE_KEY_ADMIN_REMEMBER);
       localStorage.removeItem("trs_supervisor_auth_time");
+      localStorage.removeItem("trs_supervisor_username");
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem("trs_session_role");
+      }
     } catch (e) {}
     saveToStorage();
     updateUI();
@@ -994,7 +1063,7 @@ const stagingManager = (function() {
     alert(`🎉 SUKSES!\n\nSebanyak ${successCount} data menara telah resmi di-ACC oleh Supervisor dan berhasil diperbarui di Google Spreadsheet TRS_PLM.`);
   }
 
-  // Buka/tutup modal pergantian peran & verifikasi PIN
+  // Buka/tutup modal pergantian peran & verifikasi PIN / Kredensial
   function toggleRoleModal(requireSupervisorPrompt = false) {
     const modal = document.getElementById("modalRoleAuth");
     if (!modal) return;
@@ -1002,9 +1071,13 @@ const stagingManager = (function() {
     const optOperator = document.getElementById("roleOptOperator");
     const optSupervisor = document.getElementById("roleOptSupervisor");
     const pinContainer = document.getElementById("pinInputContainer");
+    const userInput = document.getElementById("inputSupervisorUsername");
     const pinInput = document.getElementById("inputSupervisorPIN");
 
     if (pinInput) pinInput.value = "";
+    if (userInput) {
+      userInput.value = localStorage.getItem("trs_saved_username") || "supervisor";
+    }
 
     if (requireSupervisorPrompt || currentRole === "supervisor") {
       if (optSupervisor) optSupervisor.checked = true;
@@ -1024,13 +1097,12 @@ const stagingManager = (function() {
 
   function closeRoleModal() {
     const modal = document.getElementById("modalRoleAuth");
-    if (modal) {
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-    }
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
   }
 
-  // Terapkan pergantian peran setelah verifikasi PIN secara online
+  // Terapkan pergantian peran setelah verifikasi kredensial secara online
   async function submitRoleSwitch() {
     const selected = document.querySelector("input[name='authRoleOption']:checked");
     if (!selected) return;
@@ -1038,27 +1110,39 @@ const stagingManager = (function() {
     const role = selected.value;
 
     if (role === "supervisor") {
+      const userInput = document.getElementById("inputSupervisorUsername");
       const pinInput = document.getElementById("inputSupervisorPIN");
+      const chkRemember = document.getElementById("checkboxRememberRoleAuth");
+
+      const enteredUsername = (userInput ? userInput.value : "").trim() || "supervisor";
       const enteredPin = (pinInput ? pinInput.value : "").trim();
+      const shouldRemember = chkRemember ? chkRemember.checked : true;
+
+      if (!enteredPin) {
+        alert("⚠️ Silakan masukkan Password atau PIN Supervisor!");
+        if (pinInput) pinInput.focus();
+        return;
+      }
 
       const btnSubmit = document.querySelector("#modalRoleAuth button[onclick*='submitRoleSwitch']");
       const origText = btnSubmit ? btnSubmit.innerText : "";
       if (btnSubmit) btnSubmit.innerText = "Memverifikasi...";
 
-      const isValid = await verifySupervisorPINOnline(enteredPin);
+      const authRes = await verifySupervisorPINOnline(enteredPin, enteredUsername);
       if (btnSubmit) btnSubmit.innerText = origText;
 
+      const isValid = authRes && (authRes === true || authRes.valid === true);
+
       if (!isValid) {
-        alert("⚠️ PIN Supervisor salah! Silakan coba lagi (Default PIN: 1234).");
+        alert("⚠️ Username atau Password/PIN Supervisor salah!\n(Default: username 'supervisor' atau 'admin', PIN: 1234)");
         if (pinInput) pinInput.focus();
         return;
       }
 
-      currentRole = "supervisor";
-      saveToStorage();
-      updateUI();
+      const verifiedUsername = (authRes && authRes.username) ? authRes.username : enteredUsername;
+      setSupervisorSession(verifiedUsername, shouldRemember);
       closeRoleModal();
-      showToast("👑 Akses Supervisor (ACC) telah diaktifkan!", "success");
+      showToast(`👑 Akses Supervisor aktif: ${verifiedUsername} ${shouldRemember ? '(Remember Me Aktif)' : ''}`, "success");
 
       // Otomatis tarik usulan cloud saat supervisor login
       fetchDraftsFromCloud(true);
@@ -1066,15 +1150,13 @@ const stagingManager = (function() {
       // Jika ada perubahan draft, tanyakan apakah langsung ingin di-approve
       if (pendingChanges.length > 0) {
         setTimeout(() => {
-          if (confirm(`Akses Supervisor aktif. Apakah Anda ingin langsung menyetujui (ACC) ${pendingChanges.length} perubahan dalam draft?`)) {
+          if (confirm(`Akses Supervisor aktif (${verifiedUsername}). Apakah Anda ingin langsung menyetujui (ACC) ${pendingChanges.length} perubahan dalam draft?`)) {
             executeBatchApproval();
           }
         }, 300);
       }
     } else {
-      currentRole = "operator";
-      saveToStorage();
-      updateUI();
+      logoutSupervisor();
       closeRoleModal();
       showToast("Beralih ke mode Operator (Input Data).", "info");
     }
@@ -1097,6 +1179,7 @@ const stagingManager = (function() {
     closeRoleModal,
     submitRoleSwitch,
     logoutSupervisor,
+    setSupervisorSession,
     getRole: () => currentRole,
     setRole: (role) => {
       currentRole = role;

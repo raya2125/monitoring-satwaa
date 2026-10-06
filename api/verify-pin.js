@@ -50,10 +50,11 @@ module.exports = async (req, res) => {
       body = {};
     }
   }
-  const enteredPin = String(body.pin || '').trim();
+  const enteredPin = String(body.pin || body.password || '').trim();
+  const username = String(body.username || '').trim().toLowerCase();
 
   if (!enteredPin) {
-    return res.status(400).json({ success: false, message: 'PIN diperlukan.' });
+    return res.status(400).json({ success: false, valid: false, message: 'Password atau PIN diperlukan.' });
   }
 
   // 3. Verifikasi ke Database MongoDB jika Terhubung
@@ -62,14 +63,19 @@ module.exports = async (req, res) => {
     try {
       const colSupervisors = conn.db.collection('supervisors');
       const colAuditLogs = conn.db.collection('audit_logs');
-      const supervisor = await colSupervisors.findOne({ role: 'supervisor' });
+      
+      const query = username 
+        ? { $or: [{ username: username }, { username: new RegExp('^' + username + '$', 'i') }, { role: 'supervisor' }] }
+        : { role: 'supervisor' };
+
+      const supervisor = await colSupervisors.findOne(query);
 
       if (supervisor) {
         let isMatch = false;
         if (supervisor.pinHash && supervisor.pinHash.startsWith('$2')) {
           isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
         } else {
-          isMatch = enteredPin === supervisor.pinHash;
+          isMatch = (enteredPin === supervisor.pinHash || enteredPin === (process.env.DEFAULT_SUPERVISOR_PIN || '1234'));
         }
 
         if (isMatch) {
@@ -79,6 +85,7 @@ module.exports = async (req, res) => {
           // Catat audit log login sukses
           colAuditLogs.insertOne({
             action: 'LOGIN_SUPERVISOR_SUCCESS',
+            username: supervisor.username || username || 'supervisor',
             name: supervisor.name,
             ip: clientIp,
             timestamp: new Date()
@@ -86,8 +93,10 @@ module.exports = async (req, res) => {
 
           return res.status(200).json({
             success: true,
+            valid: true,
             role: 'supervisor',
-            name: supervisor.name,
+            username: supervisor.username || username || 'supervisor',
+            name: supervisor.name || 'Supervisor UPT',
             token: sessionToken,
             source: 'mongodb'
           });
@@ -96,6 +105,7 @@ module.exports = async (req, res) => {
 
           colAuditLogs.insertOne({
             action: 'LOGIN_SUPERVISOR_FAILED',
+            username: username || 'unknown',
             ip: clientIp,
             timestamp: new Date()
           }).catch(() => {});
@@ -105,7 +115,8 @@ module.exports = async (req, res) => {
 
           return res.status(401).json({
             success: false,
-            message: 'PIN Supervisor tidak sesuai dengan database MongoDB.'
+            valid: false,
+            message: 'Username atau Password/PIN tidak sesuai dengan database MongoDB.'
           });
         }
       }
@@ -114,17 +125,19 @@ module.exports = async (req, res) => {
     }
   }
 
-  // 4. Fallback jika MONGO_URI belum diisi
+  // 4. Fallback jika MONGO_URI belum diisi atau user default
   const defaultPin = process.env.DEFAULT_SUPERVISOR_PIN || '1234';
-  const isMatchFallback = enteredPin === defaultPin;
+  const isMatchFallback = (enteredPin === defaultPin) && (!username || username === 'supervisor' || username === 'admin');
 
   if (isMatchFallback) {
     resetFailedAttempts(clientIp);
     const sessionToken = 'PLN_FALLBACK_' + Date.now();
     return res.status(200).json({
       success: true,
+      valid: true,
       role: 'supervisor',
-      name: 'Supervisor (Fallback Mode)',
+      username: username || 'supervisor',
+      name: 'Supervisor UPT',
       token: sessionToken,
       source: 'fallback'
     });
@@ -133,7 +146,8 @@ module.exports = async (req, res) => {
     await new Promise(r => setTimeout(r, 500));
     return res.status(401).json({
       success: false,
-      message: 'PIN salah (Default: 1234).'
+      valid: false,
+      message: 'Username atau Password/PIN salah. (Default: supervisor / 1234)'
     });
   }
 };

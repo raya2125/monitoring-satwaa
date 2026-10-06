@@ -18,46 +18,122 @@ function renderApprovalPageView() {
 
   const isSupervisor = typeof stagingManager !== "undefined" && stagingManager.getRole() === "supervisor";
   const pendingList = typeof stagingManager !== "undefined" ? stagingManager.getPendingList() : [];
+  const savedUsername = (typeof localStorage !== "undefined" && (localStorage.getItem("trs_supervisor_username") || localStorage.getItem("trs_saved_username"))) || "supervisor";
 
-  // Jika bukan supervisor, tampilkan halaman proteksi akses PIN
+  // Jika bukan supervisor, tampilkan halaman Login Portal Khusus Approval
   if (!isSupervisor) {
     container.innerHTML = `
-      <div class="max-w-md mx-auto my-12 p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xl text-center space-y-5">
-        <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-inner">
-          <i data-lucide="lock" class="w-8 h-8"></i>
-        </div>
-        <div>
-          <h2 class="text-lg font-bold text-slate-800">Halaman Khusus Approval & ACC</h2>
-          <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
-            Halaman ini khusus diperuntukkan bagi <strong>Supervisor / Verifikator</strong> untuk menyetujui (ACC) usulan perubahan data menara.
+      <div class="max-w-md mx-auto my-8 p-8 rounded-3xl bg-white border border-slate-200/90 shadow-2xl text-center space-y-6">
+        <!-- Badge & Header Brand -->
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-sky-500/25">
+            <i data-lucide="shield-check" class="w-8 h-8"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800 tracking-tight">Portal Login Supervisor & ACC</h2>
+          <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+            Masuk dengan akun verifikator untuk membuka hak akses persetujuan (ACC) usulan perubahan data menara.
           </p>
         </div>
 
-        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-3 text-xs">
-          <label class="block font-semibold text-slate-700">
-            Masukkan PIN Supervisor:
-          </label>
-          <div class="relative">
-            <input type="password" id="inputPageSupervisorPIN" placeholder="Default: 1234" maxlength="10" 
-                   onkeydown="if(event.key==='Enter') submitPageSupervisorAuth()"
-                   class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono text-center tracking-widest text-base bg-white">
+        <!-- Form Login -->
+        <form onsubmit="event.preventDefault(); submitPageSupervisorAuth();" class="space-y-4 text-left">
+          <!-- Username Field -->
+          <div class="space-y-1.5">
+            <label for="inputPageSupervisorUsername" class="block text-xs font-semibold text-slate-700">
+              Username:
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="user" class="w-4 h-4"></i>
+              </div>
+              <input 
+                type="text" 
+                id="inputPageSupervisorUsername" 
+                placeholder="Username (contoh: supervisor atau admin)" 
+                value="${savedUsername}" 
+                autocomplete="username"
+                class="w-full pl-10 pr-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800"
+                required
+              >
+            </div>
           </div>
-          <div class="text-[11px] text-slate-400 italic text-center">
-            Petunjuk: PIN default adalah <strong>1234</strong>
-          </div>
-          <div class="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-slate-600">
-            <input type="checkbox" id="checkboxRememberAdmin" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer">
-            <label for="checkboxRememberAdmin" class="text-[11px] select-none cursor-pointer">Ingat status Admin di perangkat ini (tidak perlu isi PIN lagi)</label>
-          </div>
-        </div>
 
-        <button type="button" onclick="submitPageSupervisorAuth()" class="w-full py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-sky-600/20 transition">
-          <i data-lucide="key" class="w-4 h-4"></i>
-          <span>Buka Akses Supervisor (ACC)</span>
-        </button>
+          <!-- Password / PIN Field -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label for="inputPageSupervisorPIN" class="block text-xs font-semibold text-slate-700">
+                Password / PIN Keamanan:
+              </label>
+              <span class="text-[10px] text-slate-400 font-mono">Default: 1234</span>
+            </div>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="lock" class="w-4 h-4"></i>
+              </div>
+              <input 
+                type="password" 
+                id="inputPageSupervisorPIN" 
+                placeholder="Masukkan Password / PIN" 
+                autocomplete="current-password"
+                class="w-full pl-10 pr-10 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition bg-slate-50/50 hover:bg-white focus:bg-white font-mono tracking-wider text-slate-800"
+                required
+              >
+              <button 
+                type="button" 
+                id="btnTogglePasswordVis"
+                onclick="toggleApprovalPasswordVisibility()"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                tabindex="-1"
+                title="Tampilkan / Sembunyikan Password"
+              >
+                <i id="iconTogglePassword" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
 
-        <div class="text-[11px] text-slate-500 pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5">
-          <i data-lucide="database" class="w-3.5 h-3.5 text-sky-600"></i>
+          <!-- Remember Me Checkbox -->
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                id="checkboxRememberAdmin" 
+                checked 
+                class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer"
+              >
+              <span class="text-xs text-slate-700 font-medium">Ingat Saya (Remember Me)</span>
+            </label>
+            <span class="text-[10px] text-slate-400">Tetap login saat browser ditutup</span>
+          </div>
+
+          <!-- Quick Credential Pill for Convenience -->
+          <div class="p-2.5 rounded-xl bg-sky-50/80 border border-sky-100 flex items-center justify-between text-[11px] text-sky-800">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="info" class="w-3.5 h-3.5 text-sky-600 shrink-0"></i>
+              <span>Kredensial Default: <strong>supervisor</strong> / <strong>1234</strong></span>
+            </div>
+            <button 
+              type="button" 
+              onclick="fillDefaultSupervisorCredentials()" 
+              class="text-[10px] font-bold text-sky-700 hover:text-sky-900 underline ml-2 shrink-0 cursor-pointer"
+            >
+              Isi Otomatis
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            id="btnSubmitSupervisorLogin"
+            class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-sky-600/25 transition transform active:scale-[0.99] cursor-pointer"
+          >
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Masuk ke Dashboard Approval</span>
+          </button>
+        </form>
+
+        <!-- Security Footer -->
+        <div class="text-[11px] text-slate-400 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-600"></i>
           <span>Autentikasi diamankan oleh <strong>MongoDB Server (Bcrypt)</strong></span>
         </div>
       </div>
@@ -107,15 +183,15 @@ function renderApprovalPageView() {
                 </h1>
                 <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                  <span>👑 Akses Supervisor Aktif</span>
+                  <span>👑 ${savedUsername} (ACC Aktif)</span>
                 </span>
                 <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-sky-500/20 text-sky-200 border border-sky-500/30 flex items-center gap-1" title="PIN diverifikasi via MongoDB Backend">
                   <i data-lucide="database" class="w-3 h-3 text-sky-400"></i>
                   <span>MongoDB Auth</span>
                 </span>
-                <button type="button" onclick="stagingManager.logoutSupervisor()" class="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 flex items-center gap-1 transition" title="Kunci kembali akses approval">
+                <button type="button" onclick="stagingManager.logoutSupervisor()" class="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 flex items-center gap-1 transition" title="Logout & Kunci kembali akses approval">
                   <i data-lucide="log-out" class="w-3 h-3"></i>
-                  <span>Kunci / Logout</span>
+                  <span>Logout</span>
                 </button>
               </div>
               <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
@@ -332,45 +408,96 @@ function onApprovalSearchInput(val) {
   renderApprovalPageView();
 }
 
-// Submit PIN auth dari halaman approval secara online
+// Submit Login Auth dari halaman approval secara online
 async function submitPageSupervisorAuth() {
+  const userInput = document.getElementById("inputPageSupervisorUsername");
   const pinInput = document.getElementById("inputPageSupervisorPIN");
-  const enteredPin = (pinInput ? pinInput.value : "").trim();
   const chkRemember = document.getElementById("checkboxRememberAdmin");
+
+  const enteredUsername = (userInput ? userInput.value : "").trim() || "supervisor";
+  const enteredPin = (pinInput ? pinInput.value : "").trim();
   const shouldRemember = chkRemember ? chkRemember.checked : true;
 
-  const btn = document.querySelector("#viewApproval button[onclick*='submitPageSupervisorAuth']");
-  const origText = btn ? btn.innerHTML : "";
-  if (btn) btn.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Memverifikasi PIN...`;
-
-  let isValid = false;
-  if (typeof stagingManager !== "undefined" && typeof stagingManager.verifySupervisorPINOnline === "function") {
-    isValid = await stagingManager.verifySupervisorPINOnline(enteredPin);
-  } else {
-    isValid = enteredPin === "1234";
-  }
-
-  if (btn) btn.innerHTML = origText;
-
-  if (!isValid) {
-    alert("⚠️ PIN Supervisor salah! Silakan coba lagi (Default PIN: 1234).");
+  if (!enteredPin) {
+    alert("⚠️ Silakan masukkan Password atau PIN!");
     if (pinInput) pinInput.focus();
     return;
   }
 
+  const btn = document.getElementById("btnSubmitSupervisorLogin") || document.querySelector("#viewApproval button[type='submit']");
+  const origHtml = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="inline-block animate-spin mr-1">⌛</span> Memverifikasi Kredensial...`;
+  }
+
+  let authRes = null;
+  if (typeof stagingManager !== "undefined" && typeof stagingManager.verifySupervisorPINOnline === "function") {
+    authRes = await stagingManager.verifySupervisorPINOnline(enteredPin, enteredUsername);
+  } else {
+    authRes = (enteredPin === "1234") ? { valid: true, username: enteredUsername } : false;
+  }
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+
+  const isValid = authRes && (authRes === true || authRes.valid === true);
+
+  if (!isValid) {
+    alert("⚠️ Username atau Password/PIN salah!\n\nDefault akun:\n• Username: supervisor atau admin\n• Password/PIN: 1234");
+    if (pinInput) pinInput.focus();
+    return;
+  }
+
+  const verifiedUsername = (authRes && authRes.username) ? authRes.username : enteredUsername;
+
   if (typeof stagingManager !== "undefined") {
-    stagingManager.setRole("supervisor");
-    if (shouldRemember) {
-      try {
-        localStorage.setItem("trs_admin_remember_v1", "true");
-        localStorage.setItem("trs_user_role_v1", "supervisor");
-        localStorage.setItem("trs_supervisor_auth_time", new Date().toISOString());
-      } catch (e) {}
+    if (typeof stagingManager.setSupervisorSession === "function") {
+      stagingManager.setSupervisorSession(verifiedUsername, shouldRemember);
+    } else {
+      stagingManager.setRole("supervisor");
+      if (shouldRemember) {
+        try {
+          localStorage.setItem("trs_admin_remember_v1", "true");
+          localStorage.setItem("trs_user_role_v1", "supervisor");
+          localStorage.setItem("trs_supervisor_username", verifiedUsername);
+          localStorage.setItem("trs_supervisor_auth_time", new Date().toISOString());
+        } catch (e) {}
+      }
     }
     stagingManager.fetchDraftsFromCloud(true);
   }
+
   renderApprovalPageView();
   if (typeof showToast === "function") {
-    showToast("👑 Login Supervisor Berhasil! Sesi telah disimpan di perangkat ini.", "success");
+    showToast(`👑 Login berhasil! Selamat datang, ${verifiedUsername}. ${shouldRemember ? '(Remember Me Aktif)' : ''}`, "success");
   }
+}
+
+// Toggle password visibility (show/hide)
+function toggleApprovalPasswordVisibility() {
+  const pinInput = document.getElementById("inputPageSupervisorPIN");
+  const icon = document.getElementById("iconTogglePassword");
+  if (!pinInput) return;
+  if (pinInput.type === "password") {
+    pinInput.type = "text";
+    if (icon) icon.setAttribute("data-lucide", "eye-off");
+  } else {
+    pinInput.type = "password";
+    if (icon) icon.setAttribute("data-lucide", "eye");
+  }
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons();
+  }
+}
+
+// Bantuan isi otomatis kredensial default
+function fillDefaultSupervisorCredentials() {
+  const userInput = document.getElementById("inputPageSupervisorUsername");
+  const pinInput = document.getElementById("inputPageSupervisorPIN");
+  if (userInput) userInput.value = "supervisor";
+  if (pinInput) pinInput.value = "1234";
+  if (pinInput) pinInput.focus();
 }
