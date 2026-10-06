@@ -351,38 +351,4 @@ function deleteRow(no) {
   }
 }
 
-// Ekspor data tabel saat ini ke CSV
-function exportCSV() {
-  if (!filteredData || filteredData.length === 0) {
-    alert("Tidak ada data untuk diekspor!");
-    return;
-  }
 
-  const headers = ["No", "Nama Menara", "Jalur Transmisi", "ULTG", "Binatang 1 (AL)", "Binatang 2 (AM)", "Kategori AP", "Status Proteksi", "Perangkat", "Aktivitas", "Rekomendasi (Kolom AQ)", "Catatan"];
-  const rows = filteredData.map((item, idx) => [
-    idx + 1,
-    `"${(item.nama || "").replace(/"/g, '""')}"`,
-    `"${(item.jalur || "").replace(/"/g, '""')}"`,
-    `"${(item.ultg || "").replace(/"/g, '""')}"`,
-    `"${(item.binatang1 || "").replace(/"/g, '""')}"`,
-    `"${(item.binatang2 || "").replace(/"/g, '""')}"`,
-    `"${(item.kategori || "").replace(/"/g, '""')}"`,
-    `"${(item.proteksi || "").replace(/"/g, '""')}"`,
-    `"${(item.perangkat || "").replace(/"/g, '""')}"`,
-    `"${(item.aktivitas || "").replace(/"/g, '""')}"`,
-    `"${(item.rekomendasi || "").replace(/"/g, '""')}"`,
-    `"${(item.catatan || "").replace(/"/g, '""')}"`
-  ]);
-
-  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
-    headers.join(",") + "\n" + 
-    rows.map(e => e.join(",")).join("\n");
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `Data_Menara_Satwa_UPT_Palembang_${new Date().toISOString().slice(0, 10)}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}

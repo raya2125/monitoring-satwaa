@@ -42,10 +42,6 @@ function renderHeaderComponent() {
             <i id="syncButtonIcon" data-lucide="refresh-cw" class="w-4 h-4 text-emerald-100"></i>
             <span id="syncButtonText">Sinkronkan</span>
           </button>
-          <button onclick="exportCSV()" class="px-3.5 py-2 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-2 transition">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i>
-            Ekspor CSV
-          </button>
           <button onclick="openAddNewModal()" class="px-3.5 py-2 text-xs font-medium rounded-lg bg-sky-600 hover:bg-sky-500 text-white flex items-center gap-2 shadow-sm transition">
             <i data-lucide="plus" class="w-4 h-4"></i>
             Tambah Tower

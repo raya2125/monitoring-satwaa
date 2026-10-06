@@ -7,7 +7,7 @@
 const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1IMpg20-ciVpykFKyM4TB60Mt2asL9o1H2thnNYDtudo/export?format=csv&gid=1063140133";
 
 // URL Web App Google Apps Script Aktif (untuk POST/Write-Back update data)
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQuri-Iq_8cMUUGYhlWf0RrvN549rgCKYyYj_Gw2kajLLN9OyjeWRLyvLRXUVKcKeu/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx33SxSTLv-qCIDR9w87uEzlLFmBKfmjLCQpC9GxA1GCkQ-4pCvOwW3gtNlkDUYoONv/exec";
 
 // URL Endpoint Backend MongoDB Auth & Audit Trail (Otomatis mengikuti domain aktif / Vercel)
 const AUTH_API_URL = (typeof window !== "undefined" && window.location.origin && !window.location.origin.includes("file://")) 
