@@ -18,6 +18,7 @@ const stagingManager = (function() {
   const STORAGE_KEY_CHANGES = "trs_pending_changes_v1";
   const STORAGE_KEY_ROLE = "trs_user_role_v1";
   const STORAGE_KEY_PIN = "trs_supervisor_pin_v1";
+  const STORAGE_KEY_ADMIN_REMEMBER = "trs_admin_remember_v1";
   const DEFAULT_PIN = "1234";
 
   // Inisialisasi awal
@@ -27,7 +28,7 @@ const stagingManager = (function() {
     updateUI();
   }
 
-  // Muat data dari localStorage
+  // Muat data dari localStorage (Termasuk Remember Admin / Supervisor Session)
   function loadFromStorage() {
     try {
       const savedChanges = localStorage.getItem(STORAGE_KEY_CHANGES);
@@ -35,8 +36,13 @@ const stagingManager = (function() {
         pendingChanges = JSON.parse(savedChanges);
       }
       const savedRole = localStorage.getItem(STORAGE_KEY_ROLE);
-      if (savedRole === "supervisor" || savedRole === "operator") {
-        currentRole = savedRole;
+      const isRemembered = localStorage.getItem(STORAGE_KEY_ADMIN_REMEMBER);
+
+      // Jika admin sudah pernah login dan diingat, otomatis pulihkan akses supervisor
+      if (savedRole === "supervisor" || isRemembered === "true") {
+        currentRole = "supervisor";
+      } else if (savedRole === "operator") {
+        currentRole = "operator";
       }
     } catch (e) {
       console.warn("[StagingManager] Gagal memuat data dari storage:", e);
@@ -49,6 +55,9 @@ const stagingManager = (function() {
     try {
       localStorage.setItem(STORAGE_KEY_CHANGES, JSON.stringify(pendingChanges));
       localStorage.setItem(STORAGE_KEY_ROLE, currentRole);
+      if (currentRole === "supervisor") {
+        localStorage.setItem(STORAGE_KEY_ADMIN_REMEMBER, "true");
+      }
     } catch (e) {
       console.warn("[StagingManager] Gagal menyimpan data ke storage:", e);
     }
@@ -649,6 +658,8 @@ const stagingManager = (function() {
   // Perbarui visual peran aktif
   function updateRoleVisuals() {
     const roleBadgeHeader = document.getElementById("currentRoleText");
+    const btnHeaderSwitcher = document.getElementById("btnHeaderRoleSwitcher");
+    const btnHeaderLogout = document.getElementById("btnHeaderLogoutSupervisor");
     const roleBadgeReview = document.getElementById("reviewRoleBadge");
     const labelStagingApprove = document.getElementById("labelStagingApprove");
     const labelModalApprove = document.getElementById("labelModalApprove");
@@ -657,6 +668,18 @@ const stagingManager = (function() {
 
     if (roleBadgeHeader) {
       roleBadgeHeader.innerText = isSupervisor ? "👑 Supervisor (ACC)" : "👷 Operator (Input)";
+    }
+
+    if (btnHeaderSwitcher) {
+      if (isSupervisor) {
+        btnHeaderSwitcher.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/80 flex items-center gap-1.5 transition shadow-sm";
+      } else {
+        btnHeaderSwitcher.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition";
+      }
+    }
+
+    if (btnHeaderLogout) {
+      btnHeaderLogout.classList.toggle("hidden", !isSupervisor);
     }
 
     if (roleBadgeReview) {
@@ -675,6 +698,26 @@ const stagingManager = (function() {
     if (labelModalApprove) {
       labelModalApprove.innerText = isSupervisor ? "Setujui & Sinkronkan Semua (ACC)" : "Masukkan PIN Supervisor untuk ACC";
     }
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
+  }
+
+  // Logout Supervisor (Kembali ke mode Operator)
+  function logoutSupervisor() {
+    currentRole = "operator";
+    try {
+      localStorage.setItem(STORAGE_KEY_ROLE, "operator");
+      localStorage.removeItem(STORAGE_KEY_ADMIN_REMEMBER);
+      localStorage.removeItem("trs_supervisor_auth_time");
+    } catch (e) {}
+    saveToStorage();
+    updateUI();
+    if (typeof renderApprovalPageView === "function" && typeof currentActiveTab !== "undefined" && currentActiveTab === "approval") {
+      renderApprovalPageView();
+    }
+    showToast("🚪 Berhasil keluar dari mode Supervisor. Sekarang mode Operator.", "info");
   }
 
   // Buka modal Review Diff
@@ -1053,6 +1096,7 @@ const stagingManager = (function() {
     toggleRoleModal,
     closeRoleModal,
     submitRoleSwitch,
+    logoutSupervisor,
     getRole: () => currentRole,
     setRole: (role) => {
       currentRole = role;

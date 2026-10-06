@@ -27,10 +27,16 @@ function renderHeaderComponent() {
             Sinkronisasi Realtime Aktif
           </div>
           <!-- ROLE BADGE / SWITCHER -->
-          <button id="btnHeaderRoleSwitcher" onclick="if(typeof stagingManager!=='undefined')stagingManager.toggleRoleModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition" title="Klik untuk beralih Peran (Operator / Supervisor)">
-            <span id="currentRoleText">👷 Operator (Input)</span>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button id="btnHeaderRoleSwitcher" onclick="if(typeof stagingManager!=='undefined')stagingManager.toggleRoleModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition" title="Klik untuk beralih Peran (Operator / Supervisor)">
+              <span id="currentRoleText">👷 Operator (Input)</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+            </button>
+            <button id="btnHeaderLogoutSupervisor" onclick="if(typeof stagingManager!=='undefined')stagingManager.logoutSupervisor()" class="hidden px-2 py-1.5 text-xs font-semibold rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/70 flex items-center gap-1 transition" title="Logout dari mode Supervisor / Kunci kembali ke Operator">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+              <span>Logout</span>
+            </button>
+          </div>
 
           <button onclick="loadSpreadsheetData(true)" class="px-3.5 py-2 text-xs font-medium rounded-lg bg-emerald-700/90 hover:bg-emerald-600 text-white border border-emerald-600/70 flex items-center gap-2 shadow-sm transition" title="Tarik data terbaru dari Google Spreadsheet">
             <i id="syncButtonIcon" data-lucide="refresh-cw" class="w-4 h-4 text-emerald-100"></i>

@@ -45,6 +45,10 @@ function renderApprovalPageView() {
           <div class="text-[11px] text-slate-400 italic text-center">
             Petunjuk: PIN default adalah <strong>1234</strong>
           </div>
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-slate-600">
+            <input type="checkbox" id="checkboxRememberAdmin" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer">
+            <label for="checkboxRememberAdmin" class="text-[11px] select-none cursor-pointer">Ingat status Admin di perangkat ini (tidak perlu isi PIN lagi)</label>
+          </div>
         </div>
 
         <button type="button" onclick="submitPageSupervisorAuth()" class="w-full py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-sky-600/20 transition">
@@ -109,6 +113,10 @@ function renderApprovalPageView() {
                   <i data-lucide="database" class="w-3 h-3 text-sky-400"></i>
                   <span>MongoDB Auth</span>
                 </span>
+                <button type="button" onclick="stagingManager.logoutSupervisor()" class="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 flex items-center gap-1 transition" title="Kunci kembali akses approval">
+                  <i data-lucide="log-out" class="w-3 h-3"></i>
+                  <span>Kunci / Logout</span>
+                </button>
               </div>
               <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
                 Tinjau usulan perubahan data menara yang diajukan oleh teknisi/operator sebelum disetujui (ACC) dan disinkronkan ke Google Spreadsheet TRS_PLM.
@@ -328,6 +336,8 @@ function onApprovalSearchInput(val) {
 async function submitPageSupervisorAuth() {
   const pinInput = document.getElementById("inputPageSupervisorPIN");
   const enteredPin = (pinInput ? pinInput.value : "").trim();
+  const chkRemember = document.getElementById("checkboxRememberAdmin");
+  const shouldRemember = chkRemember ? chkRemember.checked : true;
 
   const btn = document.querySelector("#viewApproval button[onclick*='submitPageSupervisorAuth']");
   const origText = btn ? btn.innerHTML : "";
@@ -350,7 +360,17 @@ async function submitPageSupervisorAuth() {
 
   if (typeof stagingManager !== "undefined") {
     stagingManager.setRole("supervisor");
+    if (shouldRemember) {
+      try {
+        localStorage.setItem("trs_admin_remember_v1", "true");
+        localStorage.setItem("trs_user_role_v1", "supervisor");
+        localStorage.setItem("trs_supervisor_auth_time", new Date().toISOString());
+      } catch (e) {}
+    }
     stagingManager.fetchDraftsFromCloud(true);
   }
   renderApprovalPageView();
+  if (typeof showToast === "function") {
+    showToast("👑 Login Supervisor Berhasil! Sesi telah disimpan di perangkat ini.", "success");
+  }
 }

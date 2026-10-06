@@ -94,6 +94,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (typeof renderTindakLanjutComponent === "function") renderTindakLanjutComponent(); // Tab 4
   if (typeof renderModalComponent === "function") renderModalComponent();
 
+  // 1.5 Pastikan status Supervisor / Admin yang tersimpan di localStorage langsung aktif di UI
+  if (typeof stagingManager !== "undefined") {
+    stagingManager.init();
+  }
+
   // 2. Inisialisasi dataset lengkap
   if (typeof initDataset === "function") initDataset();
 
