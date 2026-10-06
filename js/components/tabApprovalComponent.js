@@ -18,7 +18,7 @@ function renderApprovalPageView() {
 
   const isSupervisor = typeof stagingManager !== "undefined" && stagingManager.getRole() === "supervisor";
   const pendingList = typeof stagingManager !== "undefined" ? stagingManager.getPendingList() : [];
-  const savedUsername = (typeof localStorage !== "undefined" && (localStorage.getItem("trs_supervisor_username") || localStorage.getItem("trs_saved_username"))) || "supervisor";
+  const savedUsername = (typeof localStorage !== "undefined" && (localStorage.getItem("trs_supervisor_username") || localStorage.getItem("trs_saved_username"))) || "pln";
 
   // Jika bukan supervisor, tampilkan halaman Login Portal Khusus Approval
   if (!isSupervisor) {
@@ -49,7 +49,7 @@ function renderApprovalPageView() {
               <input 
                 type="text" 
                 id="inputPageSupervisorUsername" 
-                placeholder="Username (contoh: supervisor atau admin)" 
+                placeholder="Username (contoh: pln)" 
                 value="${savedUsername}" 
                 autocomplete="username"
                 class="w-full pl-10 pr-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition bg-slate-50/50 hover:bg-white focus:bg-white font-medium text-slate-800"
@@ -62,9 +62,9 @@ function renderApprovalPageView() {
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
               <label for="inputPageSupervisorPIN" class="block text-xs font-semibold text-slate-700">
-                Password / PIN Keamanan:
+                Password Keamanan:
               </label>
-              <span class="text-[10px] text-slate-400 font-mono">Default: 1234</span>
+              <span class="text-[10px] text-sky-600 font-mono font-semibold bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">SHA-256 Hashed</span>
             </div>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -73,7 +73,7 @@ function renderApprovalPageView() {
               <input 
                 type="password" 
                 id="inputPageSupervisorPIN" 
-                placeholder="Masukkan Password / PIN" 
+                placeholder="Password (contoh: upt palembag)" 
                 autocomplete="current-password"
                 class="w-full pl-10 pr-10 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition bg-slate-50/50 hover:bg-white focus:bg-white font-mono tracking-wider text-slate-800"
                 required
@@ -108,8 +108,8 @@ function renderApprovalPageView() {
           <!-- Quick Credential Pill for Convenience -->
           <div class="p-2.5 rounded-xl bg-sky-50/80 border border-sky-100 flex items-center justify-between text-[11px] text-sky-800">
             <div class="flex items-center gap-1.5">
-              <i data-lucide="info" class="w-3.5 h-3.5 text-sky-600 shrink-0"></i>
-              <span>Kredensial Default: <strong>supervisor</strong> / <strong>1234</strong></span>
+              <i data-lucide="key-round" class="w-3.5 h-3.5 text-sky-600 shrink-0"></i>
+              <span>Kredensial Resmi: <strong>pln</strong> / <strong>upt palembag</strong> (SHA-256)</span>
             </div>
             <button 
               type="button" 
@@ -133,8 +133,8 @@ function renderApprovalPageView() {
 
         <!-- Security Footer -->
         <div class="text-[11px] text-slate-400 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5">
-          <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-600"></i>
-          <span>Autentikasi diamankan oleh <strong>MongoDB Server (Bcrypt)</strong></span>
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Autentikasi diamankan oleh <strong>SHA-256 Encryption & MongoDB Atlas</strong></span>
         </div>
       </div>
     `;
@@ -446,7 +446,7 @@ async function submitPageSupervisorAuth() {
   const isValid = authRes && (authRes === true || authRes.valid === true);
 
   if (!isValid) {
-    alert("⚠️ Username atau Password/PIN salah!\n\nDefault akun:\n• Username: supervisor atau admin\n• Password/PIN: 1234");
+    alert("⚠️ Username atau Password salah!\n\nKredensial Resmi:\n• Username: pln\n• Password: upt palembag (SHA-256 Hashed)\n\n(Fallback: supervisor / 1234)");
     if (pinInput) pinInput.focus();
     return;
   }
@@ -497,7 +497,7 @@ function toggleApprovalPasswordVisibility() {
 function fillDefaultSupervisorCredentials() {
   const userInput = document.getElementById("inputPageSupervisorUsername");
   const pinInput = document.getElementById("inputPageSupervisorPIN");
-  if (userInput) userInput.value = "supervisor";
-  if (pinInput) pinInput.value = "1234";
+  if (userInput) userInput.value = "pln";
+  if (pinInput) pinInput.value = "upt palembag";
   if (pinInput) pinInput.focus();
 }

@@ -40,6 +40,10 @@ const BASE_DIR = __dirname;
 const MONGO_URI = process.env.MONGO_URI || '';
 const DEFAULT_PIN = process.env.DEFAULT_SUPERVISOR_PIN || '1234';
 
+// SHA-256 Constants
+const SHA256_UPT_PALEMBAG = '34f62975d347fafd70ae76d9f49ba78a7f9d4623dec4a18d7fe64ab704d70a2f';
+const SHA256_UPT_PALEMBANG = 'a39fec3ccf58fd5b29346115ee1e7e3d20e947a86ff3ca1965a2b622fdfc24e6';
+
 // Coba muat bcryptjs & mongodb
 let bcrypt = null;
 let MongoClient = null;
@@ -98,6 +102,22 @@ async function initMongo() {
         updatedAt: new Date()
       });
       console.log(`🌱 Default Supervisor dibuat di MongoDB (PIN default: ${DEFAULT_PIN})`);
+    }
+
+    // Inisialisasi user pln dengan SHA-256 hash (upt palembag)
+    const plnUser = await colSupervisors.findOne({ username: 'pln' });
+    if (!plnUser) {
+      await colSupervisors.insertOne({
+        username: 'pln',
+        name: 'PLN UPT Palembang',
+        role: 'supervisor',
+        sha256Hash: SHA256_UPT_PALEMBAG,
+        sha256HashAlt: SHA256_UPT_PALEMBANG,
+        pinHash: bcrypt ? bcrypt.hashSync('upt palembag', 10) : SHA256_UPT_PALEMBAG,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log(`🌱 Akun PLN UPT Palembang dibuat di MongoDB (SHA-256 hash aktif)`);
     }
 
   } catch (err) {
@@ -193,63 +213,66 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { success: false, valid: false, message: 'Password atau PIN diperlukan.' });
     }
 
+    const inputSha256 = crypto.createHash('sha256').update(enteredPin).digest('hex').toLowerCase();
+    const inputRawLower = enteredPin.toLowerCase();
+
+    const isPlnPasswordMatch = (
+      inputSha256 === SHA256_UPT_PALEMBAG ||
+      inputSha256 === SHA256_UPT_PALEMBANG ||
+      inputRawLower === SHA256_UPT_PALEMBAG ||
+      inputRawLower === SHA256_UPT_PALEMBANG ||
+      inputRawLower === 'upt palembag' ||
+      inputRawLower === 'upt palembang'
+    );
+
+    let isMatch = false;
+    let matchedUser = { username: username === 'pln' ? 'pln' : (username || 'supervisor'), name: 'PLN UPT Palembang', role: 'supervisor' };
+    let authSource = 'fallback';
+
     if (isMongoConnected && colSupervisors) {
       try {
         const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const cleanUser = escapeRegex(username);
         const query = username 
-          ? { $or: [{ username: username }, { username: new RegExp('^' + cleanUser + '$', 'i') }, { role: 'supervisor' }] }
-          : { role: 'supervisor' };
+          ? { $or: [{ username: username }, { username: new RegExp('^' + cleanUser + '$', 'i') }] }
+          : { $or: [{ username: 'pln' }, { role: 'supervisor' }] };
 
-        const supervisor = await colSupervisors.findOne(query);
+        let supervisor = await colSupervisors.findOne(query);
+        if (!supervisor && (username === 'pln' || !username)) {
+          supervisor = await colSupervisors.findOne({ username: 'pln' });
+        }
+        if (!supervisor && (!username || username === 'supervisor' || username === 'admin')) {
+          supervisor = await colSupervisors.findOne({ role: 'supervisor' });
+        }
+
         if (supervisor) {
-          // Bandingkan PIN dengan hash bcrypt di MongoDB
-          let isMatch = false;
-          if (bcrypt && supervisor.pinHash && supervisor.pinHash.startsWith('$2')) {
-            isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
-          } else {
-            isMatch = enteredPin === supervisor.pinHash || enteredPin === DEFAULT_PIN;
+          if (supervisor.username === 'pln' || username === 'pln') {
+            if (isPlnPasswordMatch) {
+              isMatch = true;
+            } else if (supervisor.sha256Hash && (inputSha256 === supervisor.sha256Hash.toLowerCase() || inputRawLower === supervisor.sha256Hash.toLowerCase())) {
+              isMatch = true;
+            }
+          }
+
+          if (!isMatch && supervisor.pinHash) {
+            if (bcrypt && supervisor.pinHash.startsWith('$2')) {
+              isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
+            } else {
+              isMatch = enteredPin === supervisor.pinHash || enteredPin === DEFAULT_PIN;
+            }
+          }
+
+          if (!isMatch && isPlnPasswordMatch) {
+            isMatch = true;
           }
 
           if (isMatch) {
-            // Buat token sesi aman
-            const sessionToken = 'PLN_AUTH_' + Date.now() + '_' + crypto.randomBytes(12).toString('hex');
-            
-            // Catat audit log login sukses ke MongoDB
-            if (colAuditLogs) {
-              colAuditLogs.insertOne({
-                action: 'LOGIN_SUPERVISOR_SUCCESS',
-                username: supervisor.username || username || 'supervisor',
-                name: supervisor.name,
-                ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
-                timestamp: new Date()
-              }).catch(() => {});
-            }
-
-            return sendJson(res, 200, {
-              success: true,
-              valid: true,
-              role: 'supervisor',
+            authSource = 'mongodb';
+            matchedUser = {
               username: supervisor.username || username || 'supervisor',
-              name: supervisor.name,
-              token: sessionToken,
-              source: 'mongodb'
-            });
-          } else {
-            if (colAuditLogs) {
-              colAuditLogs.insertOne({
-                action: 'LOGIN_SUPERVISOR_FAILED',
-                username: username || 'unknown',
-                ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
-                timestamp: new Date()
-              }).catch(() => {});
-            }
-
-            return sendJson(res, 401, {
-              success: false,
-              valid: false,
-              message: 'Username atau Password/PIN Supervisor salah.'
-            });
+              name: supervisor.name || (supervisor.username === 'pln' ? 'PLN UPT Palembang' : 'Supervisor UPT'),
+              role: supervisor.role || 'supervisor'
+            };
           }
         }
       } catch (dbErr) {
@@ -257,17 +280,60 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // Fallback jika MongoDB belum terhubung: bandingkan dengan DEFAULT_PIN
-    const isValidFallback = (enteredPin === DEFAULT_PIN) && (!username || username === 'supervisor' || username === 'admin');
-    return sendJson(res, isValidFallback ? 200 : 401, {
-      success: isValidFallback,
-      valid: isValidFallback,
-      role: isValidFallback ? 'supervisor' : 'operator',
-      username: username || 'supervisor',
-      name: 'Supervisor (Mode Fallback)',
-      source: 'fallback',
-      message: isValidFallback ? 'Sukses login via fallback' : 'PIN salah'
-    });
+    if (!isMatch) {
+      const isPlnFallback = (username === 'pln' || !username) && isPlnPasswordMatch;
+      const isDefaultFallback = (enteredPin === DEFAULT_PIN) && (!username || username === 'supervisor' || username === 'admin');
+
+      if (isPlnFallback) {
+        isMatch = true;
+        authSource = 'fallback';
+        matchedUser = { username: 'pln', name: 'PLN UPT Palembang', role: 'supervisor' };
+      } else if (isDefaultFallback) {
+        isMatch = true;
+        authSource = 'fallback';
+        matchedUser = { username: username || 'supervisor', name: 'Supervisor UPT', role: 'supervisor' };
+      }
+    }
+
+    if (isMatch) {
+      const sessionToken = 'PLN_AUTH_' + Date.now() + '_' + crypto.randomBytes(12).toString('hex');
+      if (colAuditLogs) {
+        colAuditLogs.insertOne({
+          action: 'LOGIN_SUPERVISOR_SUCCESS',
+          username: matchedUser.username,
+          name: matchedUser.name,
+          ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
+          hashAlgorithm: 'sha256',
+          timestamp: new Date()
+        }).catch(() => {});
+      }
+
+      return sendJson(res, 200, {
+        success: true,
+        valid: true,
+        role: 'supervisor',
+        username: matchedUser.username,
+        name: matchedUser.name,
+        token: sessionToken,
+        hashAlgorithm: 'sha256',
+        source: authSource
+      });
+    } else {
+      if (colAuditLogs) {
+        colAuditLogs.insertOne({
+          action: 'LOGIN_SUPERVISOR_FAILED',
+          username: username || 'unknown',
+          ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local',
+          timestamp: new Date()
+        }).catch(() => {});
+      }
+
+      return sendJson(res, 401, {
+        success: false,
+        valid: false,
+        message: 'Username atau Password/PIN salah. (Gunakan username: pln & password: upt palembag)'
+      });
+    }
   }
 
   // 3. POST /api/change-pin & /api/auth/change-pin

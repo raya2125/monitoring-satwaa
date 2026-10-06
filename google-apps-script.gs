@@ -87,11 +87,25 @@ function getOrCreateDraftSheet(ss) {
   return draftSheet;
 }
 
-// Helper format tanggal Indonesia (WIB)
-function getFormattedNow() {
-  const d = new Date();
-  return Utilities.formatDate(d, "GMT+7", "dd/MM/yyyy HH:mm:ss");
+// Helper SHA-256 Hex Digest
+function computeSha256Hex(str) {
+  try {
+    if (!str) return "";
+    const rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(str), Utilities.Charset.UTF_8);
+    let hex = "";
+    for (let i = 0; i < rawHash.length; i++) {
+      let byteVal = rawHash[i];
+      if (byteVal < 0) byteVal += 256;
+      let byteHex = byteVal.toString(16);
+      if (byteHex.length === 1) byteHex = "0" + byteHex;
+      hex += byteHex;
+    }
+    return hex.toLowerCase();
+  } catch (e) {
+    return "";
+  }
 }
+
 
 // Handler GET
 function doGet(e) {
@@ -105,13 +119,35 @@ function doGet(e) {
       return handleGetDrafts(ss, params.status || "ALL");
     }
 
-    // 2. Aksi Khusus: Verifikasi PIN Supervisor secara aman
+    // 2. Aksi Khusus: Verifikasi PIN & Password Supervisor (Mendukung SHA-256)
     if (action === "verifyPin") {
-      const isMatch = String(params.pin || "").trim() === String(getSupervisorPIN()).trim();
+      const pin = String(params.pin || params.password || "").trim();
+      const user = String(params.username || "").trim().toLowerCase();
+      const pinLower = pin.toLowerCase();
+      const pinSha256 = computeSha256Hex(pin);
+      
+      const SHA256_UPT_PALEMBAG = "34f62975d347fafd70ae76d9f49ba78a7f9d4623dec4a18d7fe64ab704d70a2f";
+      const SHA256_UPT_PALEMBANG = "a39fec3ccf58fd5b29346115ee1e7e3d20e947a86ff3ca1965a2b622fdfc24e6";
+
+      const isPlnMatch = (
+        pinSha256 === SHA256_UPT_PALEMBAG ||
+        pinSha256 === SHA256_UPT_PALEMBANG ||
+        pinLower === SHA256_UPT_PALEMBAG ||
+        pinLower === SHA256_UPT_PALEMBANG ||
+        pinLower === "upt palembag" ||
+        pinLower === "upt palembang"
+      );
+
+      const isDefaultMatch = (pin === String(getSupervisorPIN()).trim()) && (!user || user === "supervisor" || user === "admin");
+      const isMatch = isPlnMatch || isDefaultMatch;
+
       return ContentService.createTextOutput(JSON.stringify({
         status: isMatch ? "success" : "error",
         valid: isMatch,
-        message: isMatch ? "PIN Supervisor Valid" : "PIN Salah"
+        role: "supervisor",
+        username: isPlnMatch ? "pln" : (user || "supervisor"),
+        hashAlgorithm: "sha256",
+        message: isMatch ? "Autentikasi Valid" : "Username atau Password/PIN Salah"
       })).setMimeType(ContentService.MimeType.JSON);
     }
 

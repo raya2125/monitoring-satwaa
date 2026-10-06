@@ -118,12 +118,22 @@ const stagingManager = (function() {
   }
 
   // Verifikasi Kredensial Login (Username & PIN/Password) ke Backend MongoDB / Cloud
-  async function verifySupervisorPINOnline(enteredPin, enteredUsername = "supervisor") {
+  async function verifySupervisorPINOnline(enteredPin, enteredUsername = "pln") {
     const pin = (enteredPin || "").trim();
-    const username = (enteredUsername || "supervisor").trim();
+    const username = (enteredUsername || "pln").trim();
     if (!pin) return false;
 
-    // 1. Prioritas Utama: Verifikasi ke Backend Auth MongoDB (Terenkripsi Bcrypt)
+    // Hitung hash SHA-256 di browser secara asynchronous jika fungsi tersedia
+    let clientHash = "";
+    if (typeof computeSha256 === "function") {
+      try {
+        clientHash = await computeSha256(pin);
+      } catch (e) {
+        console.warn("[StagingManager] Gagal hash SHA-256 client:", e);
+      }
+    }
+
+    // 1. Prioritas Utama: Verifikasi ke Backend Auth MongoDB / API Server (SHA-256 & Bcrypt)
     try {
       const apiUrl = typeof AUTH_API_URL !== "undefined" ? AUTH_API_URL : (window.location.origin || "http://localhost:8080");
       const res = await fetch(`${apiUrl}/api/verify-pin`, {
@@ -132,21 +142,22 @@ const stagingManager = (function() {
         body: JSON.stringify({
           username: username,
           pin: pin,
-          password: pin
+          password: pin,
+          sha256Hash: clientHash
         })
       });
       const data = await res.json();
       if (data) {
         if (data.success === true || data.valid === true) {
           if (data.source === "mongodb" || data.authSource === "mongodb") {
-            console.log("🔐 Terverifikasi via Database MongoDB Atlas!");
+            console.log("🔐 Terverifikasi via Database MongoDB Atlas (SHA-256)! ");
           }
           return {
             valid: true,
             success: true,
             role: "supervisor",
             username: data.username || username,
-            name: data.name || "Supervisor UPT"
+            name: data.name || (username.toLowerCase() === "pln" ? "PLN UPT Palembang" : "Supervisor UPT")
           };
         } else if (data.success === false || data.valid === false) {
           return false;
@@ -168,8 +179,8 @@ const stagingManager = (function() {
               valid: true,
               success: true,
               role: "supervisor",
-              username: username,
-              name: "Supervisor UPT"
+              username: json.username || username,
+              name: (username.toLowerCase() === "pln") ? "PLN UPT Palembang" : "Supervisor UPT"
             };
           }
           return false;
@@ -180,8 +191,30 @@ const stagingManager = (function() {
     }
 
     // 3. Fallback Darurat: Komparasi lokal jika offline total
+    const SHA256_UPT_PALEMBAG = "34f62975d347fafd70ae76d9f49ba78a7f9d4623dec4a18d7fe64ab704d70a2f";
+    const SHA256_UPT_PALEMBANG = "a39fec3ccf58fd5b29346115ee1e7e3d20e947a86ff3ca1965a2b622fdfc24e6";
+
+    const isPlnMatch = (username.toLowerCase() === "pln" || !username) && (
+      pin.toLowerCase() === "upt palembag" ||
+      pin.toLowerCase() === "upt palembang" ||
+      clientHash === SHA256_UPT_PALEMBAG ||
+      clientHash === SHA256_UPT_PALEMBANG ||
+      pin.toLowerCase() === SHA256_UPT_PALEMBAG
+    );
+
     const isPinMatch = (pin === getSupervisorPIN());
     const isUserMatch = !username || username.toLowerCase() === "supervisor" || username.toLowerCase() === "admin";
+
+    if (isPlnMatch) {
+      return {
+        valid: true,
+        success: true,
+        role: "supervisor",
+        username: "pln",
+        name: "PLN UPT Palembang"
+      };
+    }
+
     if (isPinMatch && isUserMatch) {
       return {
         valid: true,
@@ -578,17 +611,20 @@ const stagingManager = (function() {
             <div id="pinInputContainer" class="hidden space-y-2.5 pt-2 border-t border-slate-100">
               <div class="space-y-1">
                 <label for="inputSupervisorUsername" class="block font-semibold text-slate-700 text-xs">Username:</label>
-                <input type="text" id="inputSupervisorUsername" placeholder="Username (supervisor atau admin)" value="supervisor" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 text-xs bg-slate-50 focus:bg-white font-medium text-slate-800">
+                <input type="text" id="inputSupervisorUsername" placeholder="Username (pln)" value="pln" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 text-xs bg-slate-50 focus:bg-white font-medium text-slate-800">
               </div>
               <div class="space-y-1">
-                <label for="inputSupervisorPIN" class="block font-semibold text-slate-700 text-xs">Password / PIN Supervisor:</label>
-                <input type="password" id="inputSupervisorPIN" placeholder="Default: 1234" onkeydown="if(event.key==='Enter')stagingManager.submitRoleSwitch()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono text-center tracking-widest text-sm bg-slate-50 focus:bg-white">
+                <div class="flex items-center justify-between">
+                  <label for="inputSupervisorPIN" class="block font-semibold text-slate-700 text-xs">Password Keamanan:</label>
+                  <span class="text-[9px] font-mono text-sky-600 bg-sky-50 px-1 rounded border border-sky-200">SHA-256</span>
+                </div>
+                <input type="password" id="inputSupervisorPIN" placeholder="Password (contoh: upt palembag)" onkeydown="if(event.key==='Enter')stagingManager.submitRoleSwitch()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono text-center tracking-widest text-sm bg-slate-50 focus:bg-white">
               </div>
               <div class="flex items-center gap-2 pt-1 text-slate-600">
                 <input type="checkbox" id="checkboxRememberRoleAuth" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer">
                 <label for="checkboxRememberRoleAuth" class="text-[11px] select-none cursor-pointer">Ingat saya di perangkat ini (Remember Me)</label>
               </div>
-              <div class="text-[10px] text-slate-400 italic text-center">Petunjuk: Kredensial default: <strong>supervisor</strong> / PIN: <strong>1234</strong></div>
+              <div class="text-[10px] text-slate-400 italic text-center">Kredensial resmi: username <strong>pln</strong> / password <strong>upt palembag</strong> (SHA-256)</div>
             </div>
           </div>
 
@@ -1076,7 +1112,7 @@ const stagingManager = (function() {
 
     if (pinInput) pinInput.value = "";
     if (userInput) {
-      userInput.value = localStorage.getItem("trs_saved_username") || "supervisor";
+      userInput.value = localStorage.getItem("trs_saved_username") || "pln";
     }
 
     if (requireSupervisorPrompt || currentRole === "supervisor") {
@@ -1114,7 +1150,7 @@ const stagingManager = (function() {
       const pinInput = document.getElementById("inputSupervisorPIN");
       const chkRemember = document.getElementById("checkboxRememberRoleAuth");
 
-      const enteredUsername = (userInput ? userInput.value : "").trim() || "supervisor";
+      const enteredUsername = (userInput ? userInput.value : "").trim() || "pln";
       const enteredPin = (pinInput ? pinInput.value : "").trim();
       const shouldRemember = chkRemember ? chkRemember.checked : true;
 
@@ -1134,7 +1170,7 @@ const stagingManager = (function() {
       const isValid = authRes && (authRes === true || authRes.valid === true);
 
       if (!isValid) {
-        alert("⚠️ Username atau Password/PIN Supervisor salah!\n(Default: username 'supervisor' atau 'admin', PIN: 1234)");
+        alert("⚠️ Username atau Password salah!\n\nKredensial Resmi:\n• Username: pln\n• Password: upt palembag (SHA-256 Hash)\n\n(Fallback: supervisor / 1234)");
         if (pinInput) pinInput.focus();
         return;
       }
