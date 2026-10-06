@@ -837,9 +837,9 @@ const stagingManager = (function() {
       // Diff rows
       const diffRows = (item.changesSummary || []).map(d => `
         <tr class="border-b border-slate-100 last:border-0">
-          <td class="py-1.5 px-2 font-medium text-slate-500 w-36">${d.label}</td>
-          <td class="py-1.5 px-2 text-slate-500 line-through">${d.before || "-"}</td>
-          <td class="py-1.5 px-2 text-emerald-700 font-bold bg-emerald-50/50">${d.after || "-"}</td>
+          <td class="py-1.5 px-2 font-medium text-slate-500 w-36">${escapeHtml(d.label)}</td>
+          <td class="py-1.5 px-2 text-slate-500 line-through">${escapeHtml(d.before || "-")}</td>
+          <td class="py-1.5 px-2 text-emerald-700 font-bold bg-emerald-50/50">${escapeHtml(d.after || "-")}</td>
         </tr>
       `).join("");
 
@@ -858,15 +858,15 @@ const stagingManager = (function() {
           <div class="flex items-start justify-between gap-3">
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-extrabold text-slate-800 text-sm">${item.towerName}</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">${item.ultg}</span>
+                <span class="font-extrabold text-slate-800 text-sm">${escapeHtml(item.towerName)}</span>
+                <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">${escapeHtml(item.ultg)}</span>
                 ${typeBadge}
               <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                <span>${item.jalur}</span>
+                <span>${escapeHtml(item.jalur)}</span>
                 <span>&bull;</span>
-                <span>Pengusul: <strong class="text-sky-700 font-semibold">${item.operatorName || "Teknisi Lapangan"}</strong></span>
+                <span>Pengusul: <strong class="text-sky-700 font-semibold">${escapeHtml(item.operatorName || "Teknisi Lapangan")}</strong></span>
                 <span>&bull;</span>
-                <span>${item.timeFormatted} WIB</span>
+                <span>${escapeHtml(item.timeFormatted)} WIB</span>
               </div>
             </div>
 

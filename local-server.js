@@ -195,8 +195,10 @@ const server = http.createServer(async (req, res) => {
 
     if (isMongoConnected && colSupervisors) {
       try {
+        const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const cleanUser = escapeRegex(username);
         const query = username 
-          ? { $or: [{ username: username }, { username: new RegExp('^' + username + '$', 'i') }, { role: 'supervisor' }] }
+          ? { $or: [{ username: username }, { username: new RegExp('^' + cleanUser + '$', 'i') }, { role: 'supervisor' }] }
           : { role: 'supervisor' };
 
         const supervisor = await colSupervisors.findOne(query);

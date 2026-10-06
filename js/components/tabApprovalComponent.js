@@ -313,16 +313,16 @@ function renderPendingCardsHtml(list) {
       typeBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">Rencana Tindak Lanjut (Kolom AS s.d. BA)</span>`;
     }
 
-    const operatorName = item.operatorName || "Teknisi Lapangan";
+    const operatorName = escapeHtml(item.operatorName || "Teknisi Lapangan");
 
     // Diff Rows
     const diffRows = (item.changesSummary || []).map(d => `
       <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
-        <td class="py-2 px-3 font-semibold text-slate-700 w-48">${d.label}</td>
-        <td class="py-2 px-3 text-slate-500 line-through text-xs">${d.before || "-"}</td>
+        <td class="py-2 px-3 font-semibold text-slate-700 w-48">${escapeHtml(d.label)}</td>
+        <td class="py-2 px-3 text-slate-500 line-through text-xs">${escapeHtml(d.before || "-")}</td>
         <td class="py-2 px-3 text-emerald-700 font-bold bg-emerald-50/40 text-xs flex items-center gap-1.5">
           <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-emerald-500"></i>
-          <span>${d.after || "-"}</span>
+          <span>${escapeHtml(d.after || "-")}</span>
         </td>
       </tr>
     `).join("");
@@ -334,8 +334,8 @@ function renderPendingCardsHtml(list) {
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <div class="flex items-center gap-2.5 flex-wrap">
-              <span class="font-extrabold text-base text-slate-800">${item.towerName}</span>
-              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${item.ultg}</span>
+              <span class="font-extrabold text-base text-slate-800">${escapeHtml(item.towerName)}</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(item.ultg)}</span>
               ${typeBadge}
               <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
                 <i data-lucide="cloud" class="w-3 h-3 text-amber-500"></i>
@@ -343,9 +343,9 @@ function renderPendingCardsHtml(list) {
               </span>
             </div>
             <div class="text-xs text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
-              <span>Jalur: <strong class="text-slate-600">${item.jalur}</strong></span>
+              <span>Jalur: <strong class="text-slate-600">${escapeHtml(item.jalur)}</strong></span>
               <span>&bull;</span>
-              <span>Waktu: <strong class="text-slate-600">${item.timeFormatted} WIB</strong></span>
+              <span>Waktu: <strong class="text-slate-600">${escapeHtml(item.timeFormatted)} WIB</strong></span>
             </div>
           </div>
 

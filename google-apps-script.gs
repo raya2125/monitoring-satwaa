@@ -249,32 +249,43 @@ function routeAction(contents) {
   const action = contents.action || "";
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 1. Simpan usulan draft ke tab DRAFT_ANTREAN
+  // 1. Simpan usulan draft ke tab DRAFT_ANTREAN (Terbuka untuk teknisi lapangan input usulan)
   if (action === "submitDraft") {
     return handleSubmitDraft(ss, contents);
   }
 
-  // 2. Ambil daftar draft antrean
+  // 2. Ambil daftar draft antrean (Read-only status antrean)
   if (action === "getDrafts") {
     return handleGetDrafts(ss, contents.status || "ALL");
   }
 
-  // 3. Setujui usulan draft tertentu (ACC) & terapkan ke sheet utama
+  // 3. Otorisasi Keamanan: Cegah IDOR & Manipulasi Data Tanpa Izin
+  // Seluruh tindakan verifikasi ACC, penolakan, maupun penulisan langsung wajib menyertakan PIN Supervisor yang valid
+  const providedPin = String(contents.pin || contents.supervisorPin || "").trim();
+  const validPin = String(getSupervisorPIN()).trim();
+  if (!providedPin || providedPin !== validPin) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: "Akses Ditolak (401 Unauthorized): PIN Supervisor diperlukan untuk menyetujui (ACC) atau mengubah data menara."
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // 4. Setujui usulan draft tertentu (ACC) & terapkan ke sheet utama
   if (action === "approveDraft") {
     return handleApproveDraft(ss, contents);
   }
 
-  // 4. Tolak usulan draft
+  // 5. Tolak usulan draft
   if (action === "rejectDraft") {
     return handleRejectDraft(ss, contents);
   }
 
-  // 5. Batch ACC banyak draft sekaligus
+  // 6. Batch ACC banyak draft sekaligus
   if (action === "batchApproveDrafts") {
     return handleBatchApproveDrafts(ss, contents);
   }
 
-  // 6. Langsung tulis ke data utama (Kompatibilitas mode lama)
+  // 7. Langsung tulis ke data utama (Memerlukan PIN)
   return handleUpdateRequest(contents);
 }
 

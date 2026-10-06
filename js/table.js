@@ -155,11 +155,11 @@ function renderTable() {
       row.innerHTML = `
         <td class="py-3 px-3.5 text-center font-medium text-slate-400 text-xs">${globalIdx}</td>
         <td class="py-3 px-3.5">
-          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${item.nama} ${draftBadge}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">${item.jalur}</div>
+          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${escapeHtml(item.nama)} ${draftBadge}</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(item.jalur)}</div>
         </td>
         <td class="py-3 px-3.5">
-          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${item.ultg}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(item.ultg)}</span>
         </td>
         <td class="py-3 px-3.5 text-center">${proteksiBadge}</td>
         <td class="py-3 px-3.5">${perangkatHtml}</td>
@@ -240,11 +240,11 @@ function renderTable() {
       row.innerHTML = `
         <td class="py-3 px-3.5 text-center font-medium text-slate-400 text-xs">${globalIdx}</td>
         <td class="py-3 px-3.5">
-          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${item.nama} ${draftBadgeSatwa}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">${item.jalur}</div>
+          <div class="font-bold text-slate-800 flex items-center flex-wrap gap-1">${escapeHtml(item.nama)} ${draftBadgeSatwa}</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(item.jalur)}</div>
         </td>
         <td class="py-3 px-3.5">
-          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${item.ultg}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(item.ultg)}</span>
         </td>
         <td class="py-3 px-3.5">${hewanBadge}</td>
         <td class="py-3 px-3.5 text-center text-[11px]">${actText}</td>

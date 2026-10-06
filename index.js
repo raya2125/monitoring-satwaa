@@ -249,6 +249,27 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    await initMongo().catch(() => {});
+
+    // Periksa rate limiting persisten di MongoDB (Tahan terhadap cold-start serverless)
+    if (isMongoConnected && colAuditLogs) {
+      try {
+        const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const failCount = await colAuditLogs.countDocuments({
+          action: 'LOGIN_SUPERVISOR_FAILED',
+          ip: clientIp,
+          timestamp: { $gte: fifteenMinAgo }
+        });
+        if (failCount >= 5) {
+          return sendJson(res, 429, {
+            valid: false,
+            success: false,
+            error: 'Terlalu banyak percobaan salah (Database Lock). Silakan tunggu 15 menit.'
+          });
+        }
+      } catch (e) {}
+    }
+
     const body = await parseJsonBody(req);
     const username = String(body.username || '').trim().toLowerCase();
     const pin = String(body.pin || body.password || '').trim();
@@ -257,16 +278,18 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { valid: false, success: false, error: 'Password atau PIN tidak boleh kosong.' });
     }
 
-    await initMongo().catch(() => {});
-
     let isValid = false;
     let authSource = 'local';
     let matchedUser = { username: username || 'supervisor', name: 'Supervisor UPT', role: 'supervisor' };
 
+    // Sanitasi Regex untuk Mencegah ReDoS (Regular Expression Denial of Service)
+    const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     if (isMongoConnected && colSupervisors && bcrypt) {
       try {
+        const cleanUser = escapeRegex(username);
         const query = username
-          ? { $or: [{ username: username }, { username: new RegExp('^' + username + '$', 'i') }, { role: 'supervisor' }] }
+          ? { $or: [{ username: username }, { username: new RegExp('^' + cleanUser + '$', 'i') }, { role: 'supervisor' }] }
           : { role: 'supervisor' };
         const supervisor = await colSupervisors.findOne(query);
 
@@ -296,6 +319,15 @@ const server = http.createServer(async (req, res) => {
 
     if (isValid) {
       attemptTracker.delete(clientIp);
+      if (isMongoConnected && colAuditLogs) {
+        colAuditLogs.insertOne({
+          action: 'LOGIN_SUPERVISOR_SUCCESS',
+          ip: clientIp,
+          username: matchedUser.username,
+          timestamp: new Date()
+        }).catch(() => {});
+      }
+
       return sendJson(res, 200, {
         success: true,
         valid: true,
@@ -307,6 +339,15 @@ const server = http.createServer(async (req, res) => {
       });
     } else {
       recordFailedAttempt(clientIp);
+      if (isMongoConnected && colAuditLogs) {
+        colAuditLogs.insertOne({
+          action: 'LOGIN_SUPERVISOR_FAILED',
+          ip: clientIp,
+          username: username || 'unknown',
+          timestamp: new Date()
+        }).catch(() => {});
+      }
+
       await new Promise(r => setTimeout(r, 500));
       return sendJson(res, 401, {
         success: false,

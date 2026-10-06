@@ -411,7 +411,12 @@ async function syncToGoogleSpreadsheet(payload) {
     return false;
   }
 
-  const payloadStr = JSON.stringify(payload);
+  // Sertakan PIN Supervisor untuk otorisasi write ke Google Spreadsheet
+  const supervisorPin = (typeof stagingManager !== "undefined" && typeof stagingManager.getSupervisorPIN === "function")
+    ? stagingManager.getSupervisorPIN()
+    : (localStorage.getItem("trs_supervisor_pin_v1") || "1234");
+  const securePayload = Object.assign({}, payload, { pin: supervisorPin });
+  const payloadStr = JSON.stringify(securePayload);
 
   // Tampilkan badge sinkronisasi di UI
   const badge = document.getElementById("syncBadge");
