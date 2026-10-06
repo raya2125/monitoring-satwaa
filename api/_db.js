@@ -58,21 +58,24 @@ async function connectToDatabase() {
       });
     }
 
-    // Inisialisasi akun pln default dengan hash SHA-256 (upt palembag)
+    // Inisialisasi / perbarui akun pln default dengan password langsung (upt palembag)
     const plnUser = await colSupervisors.findOne({ username: 'pln' });
     if (!plnUser) {
-      const sha256_upt = '34f62975d347fafd70ae76d9f49ba78a7f9d4623dec4a18d7fe64ab704d70a2f';
-      const sha256_alt = 'a39fec3ccf58fd5b29346115ee1e7e3d20e947a86ff3ca1965a2b622fdfc24e6';
       await colSupervisors.insertOne({
         username: 'pln',
         name: 'PLN UPT Palembang',
         role: 'supervisor',
-        sha256Hash: sha256_upt,
-        sha256HashAlt: sha256_alt,
-        pinHash: bcrypt ? bcrypt.hashSync('upt palembag', 10) : sha256_upt,
+        password: 'upt palembag',
+        pin: 'upt palembag',
+        pinHash: 'upt palembag',
         createdAt: new Date(),
         updatedAt: new Date()
       });
+    } else {
+      await colSupervisors.updateOne(
+        { username: 'pln' },
+        { $set: { password: 'upt palembag', pin: 'upt palembag', pinHash: 'upt palembag' } }
+      );
     }
 
     return { client, db };

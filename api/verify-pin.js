@@ -100,9 +100,9 @@ module.exports = async (req, res) => {
       if (supervisor) {
         let isMatch = false;
 
-        // Cek SHA-256 untuk akun pln atau jika tersimpan hash SHA-256 di db
+        // Cek langsung password plaintext
         if (supervisor.username === 'pln' || username === 'pln') {
-          if (isPlnPasswordMatch) {
+          if (isPlnPasswordMatch || (supervisor.password && enteredPinRawLower === String(supervisor.password).toLowerCase()) || (supervisor.pin && enteredPinRawLower === String(supervisor.pin).toLowerCase())) {
             isMatch = true;
           } else if (supervisor.sha256Hash && (enteredPinSha256 === supervisor.sha256Hash.toLowerCase() || enteredPinRawLower === supervisor.sha256Hash.toLowerCase())) {
             isMatch = true;
@@ -114,7 +114,7 @@ module.exports = async (req, res) => {
           if (supervisor.pinHash.startsWith('$2')) {
             isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
           } else {
-            isMatch = (enteredPin === supervisor.pinHash || enteredPin === (process.env.DEFAULT_SUPERVISOR_PIN || '1234'));
+            isMatch = (enteredPinRawLower === String(supervisor.pinHash).toLowerCase() || enteredPin === (process.env.DEFAULT_SUPERVISOR_PIN || '1234'));
           }
         }
 

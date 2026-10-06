@@ -615,8 +615,8 @@ const stagingManager = (function() {
               </div>
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
-                  <label for="inputSupervisorPIN" class="block font-semibold text-slate-700 text-xs">Password Keamanan:</label>
-                  <span class="text-[9px] font-mono text-sky-600 bg-sky-50 px-1 rounded border border-sky-200">SHA-256</span>
+                  <label for="inputSupervisorPIN" class="block font-semibold text-slate-700 text-xs">Password:</label>
+                  <span class="text-[9px] font-mono text-slate-500 bg-slate-100 px-1 rounded border border-slate-200">upt palembag</span>
                 </div>
                 <input type="password" id="inputSupervisorPIN" placeholder="Password (contoh: upt palembag)" onkeydown="if(event.key==='Enter')stagingManager.submitRoleSwitch()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono text-center tracking-widest text-sm bg-slate-50 focus:bg-white">
               </div>
@@ -624,7 +624,7 @@ const stagingManager = (function() {
                 <input type="checkbox" id="checkboxRememberRoleAuth" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer">
                 <label for="checkboxRememberRoleAuth" class="text-[11px] select-none cursor-pointer">Ingat saya di perangkat ini (Remember Me)</label>
               </div>
-              <div class="text-[10px] text-slate-400 italic text-center">Kredensial resmi: username <strong>pln</strong> / password <strong>upt palembag</strong> (SHA-256)</div>
+              <div class="text-[10px] text-slate-400 italic text-center">Kredensial login: username <strong>pln</strong> / password <strong>upt palembag</strong></div>
             </div>
           </div>
 
@@ -1170,7 +1170,7 @@ const stagingManager = (function() {
       const isValid = authRes && (authRes === true || authRes.valid === true);
 
       if (!isValid) {
-        alert("⚠️ Username atau Password salah!\n\nKredensial Resmi:\n• Username: pln\n• Password: upt palembag (SHA-256 Hash)\n\n(Fallback: supervisor / 1234)");
+        alert("⚠️ Username atau Password salah!\n\nKredensial Login:\n• Username: pln\n• Password: upt palembag\n\n(Fallback: supervisor / 1234)");
         if (pinInput) pinInput.focus();
         return;
       }

@@ -104,20 +104,25 @@ async function initMongo() {
       console.log(`🌱 Default Supervisor dibuat di MongoDB (PIN default: ${DEFAULT_PIN})`);
     }
 
-    // Inisialisasi user pln dengan SHA-256 hash (upt palembag)
+    // Inisialisasi / perbarui user pln dengan password langsung (upt palembag)
     const plnUser = await colSupervisors.findOne({ username: 'pln' });
     if (!plnUser) {
       await colSupervisors.insertOne({
         username: 'pln',
         name: 'PLN UPT Palembang',
         role: 'supervisor',
-        sha256Hash: SHA256_UPT_PALEMBAG,
-        sha256HashAlt: SHA256_UPT_PALEMBANG,
-        pinHash: bcrypt ? bcrypt.hashSync('upt palembag', 10) : SHA256_UPT_PALEMBAG,
+        password: 'upt palembag',
+        pin: 'upt palembag',
+        pinHash: 'upt palembag',
         createdAt: new Date(),
         updatedAt: new Date()
       });
-      console.log(`🌱 Akun PLN UPT Palembang dibuat di MongoDB (SHA-256 hash aktif)`);
+      console.log(`🌱 Akun PLN UPT Palembang dibuat di MongoDB (password: upt palembag)`);
+    } else {
+      await colSupervisors.updateOne(
+        { username: 'pln' },
+        { $set: { password: 'upt palembag', pin: 'upt palembag', pinHash: 'upt palembag' } }
+      );
     }
 
   } catch (err) {
@@ -247,7 +252,7 @@ const server = http.createServer(async (req, res) => {
 
         if (supervisor) {
           if (supervisor.username === 'pln' || username === 'pln') {
-            if (isPlnPasswordMatch) {
+            if (isPlnPasswordMatch || (supervisor.password && inputRawLower === String(supervisor.password).toLowerCase()) || (supervisor.pin && inputRawLower === String(supervisor.pin).toLowerCase())) {
               isMatch = true;
             } else if (supervisor.sha256Hash && (inputSha256 === supervisor.sha256Hash.toLowerCase() || inputRawLower === supervisor.sha256Hash.toLowerCase())) {
               isMatch = true;
@@ -258,7 +263,7 @@ const server = http.createServer(async (req, res) => {
             if (bcrypt && supervisor.pinHash.startsWith('$2')) {
               isMatch = bcrypt.compareSync(enteredPin, supervisor.pinHash);
             } else {
-              isMatch = enteredPin === supervisor.pinHash || enteredPin === DEFAULT_PIN;
+              isMatch = (inputRawLower === String(supervisor.pinHash).toLowerCase() || enteredPin === supervisor.pinHash || enteredPin === DEFAULT_PIN);
             }
           }
 
